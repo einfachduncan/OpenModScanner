@@ -6,7 +6,8 @@ Ein quelloffener Minecraft-Mod-Scanner fuer Windows PowerShell.
 Wichtig:
 - Das Skript liest nur Dateien aus dem Ordner, den der Benutzer angibt.
 - Das Skript veraendert, verschiebt und loescht keine Dateien.
-- Das Skript sendet keine Daten ins Internet.
+- Das Skript sendet nur dann Hashes an Modrinth/Megabase, wenn der Benutzer
+  die Online-Verifikation ausdruecklich mit y aktiviert.
 - Das Skript nutzt keine versteckten Downloads.
 - Das Skript braucht keine Administratorrechte.
 - Das Skript nutzt nur PowerShell- und .NET-Bordmittel.
@@ -131,6 +132,137 @@ function Test-ScanFolder {
     }
 
     return (Test-Path -LiteralPath $FolderPath -PathType Container)
+}
+
+<#
+Funktion: Get-OnlineVerificationChoice
+
+Diese Funktion fragt den Benutzer, ob bekannte Mods online verifiziert werden
+sollen. Standard ist Nein, damit ohne ausdrueckliche Zustimmung keine Daten ins
+Internet gesendet werden. Wenn der Benutzer y eingibt, werden spaeter nur
+SHA1-Dateihashes an Modrinth und Megabase gesendet.
+#>
+function Get-OnlineVerificationChoice {
+    Write-Host ""
+    Write-Host "Online verification with Modrinth/Megabase? [y/N]" -ForegroundColor White
+    Write-Host "Default: N - offline mode, no hashes are sent" -ForegroundColor DarkGray
+    $choice = Read-Host "VERIFY"
+
+    return ($choice.Trim().ToLowerInvariant() -eq "y")
+}
+
+<#
+Funktion: Query-Modrinth
+
+Diese Funktion fragt die oeffentliche Modrinth-API mit einem SHA1-Hash.
+Sie wird nur aufgerufen, wenn der Benutzer Online-Verifikation aktiviert hat.
+Es wird kein Mod-Inhalt hochgeladen, sondern nur der Hash der Datei.
+#>
+function Query-Modrinth {
+    param (
+        [Parameter(Mandatory = $true)]
+        [string]$Hash
+    )
+
+    try {
+        $versionInfo = Invoke-RestMethod -Uri ("https://api.modrinth.com/v2/version_file/{0}" -f $Hash) -Method Get -UseBasicParsing -ErrorAction Stop
+
+        if (($versionInfo.PSObject.Properties.Name -contains "project_id") -and $null -ne $versionInfo.project_id) {
+            $projectInfo = Invoke-RestMethod -Uri ("https://api.modrinth.com/v2/project/{0}" -f $versionInfo.project_id) -Method Get -UseBasicParsing -ErrorAction Stop
+
+            return [PSCustomObject]@{
+                Source = "Modrinth"
+                Name = [string]$projectInfo.title
+                Slug = [string]$projectInfo.slug
+            }
+        }
+    }
+    catch {
+        return $null
+    }
+
+    return $null
+}
+
+<#
+Funktion: Query-Megabase
+
+Diese Funktion fragt die Megabase-API mit einem SHA1-Hash.
+Sie wird nur aufgerufen, wenn Modrinth keinen Treffer liefert und der Benutzer
+Online-Verifikation aktiviert hat. Auch hier wird nur der Hash gesendet.
+#>
+function Query-Megabase {
+    param (
+        [Parameter(Mandatory = $true)]
+        [string]$Hash
+    )
+
+    try {
+        $result = Invoke-RestMethod -Uri ("https://megabase.vercel.app/api/query?hash={0}" -f $Hash) -Method Get -UseBasicParsing -ErrorAction Stop
+
+        $hasData = ($result.PSObject.Properties.Name -contains "data") -and $null -ne $result.data
+        $hasError = ($result.PSObject.Properties.Name -contains "error") -and [bool]$result.error
+
+        if ($hasData -and -not $hasError) {
+            return [PSCustomObject]@{
+                Source = "Megabase"
+                Name = [string]$result.data.name
+                Slug = [string]$result.data.slug
+            }
+        }
+    }
+    catch {
+        return $null
+    }
+
+    return $null
+}
+
+<#
+Funktion: Get-ModVerification
+
+Diese Funktion berechnet zuerst lokal den SHA1-Hash der Mod-Datei.
+Wenn Online-Verifikation aktiv ist, fragt sie damit Modrinth und danach
+Megabase. Gibt eine Verifikation zurueck, wenn eine bekannte Mod gefunden wird.
+#>
+function Get-ModVerification {
+    param (
+        [Parameter(Mandatory = $true)]
+        [object]$ModFile,
+
+        [Parameter(Mandatory = $true)]
+        [bool]$UseOnlineVerification
+    )
+
+    try {
+        $hash = (Get-FileHash -LiteralPath $ModFile.FullName -Algorithm SHA1 -ErrorAction Stop).Hash
+    }
+    catch {
+        return $null
+    }
+
+    if (-not $UseOnlineVerification) {
+        return $null
+    }
+
+    $verified = Query-Modrinth -Hash $hash
+
+    if ($null -eq $verified) {
+        $verified = Query-Megabase -Hash $hash
+    }
+
+    if ($null -eq $verified) {
+        return $null
+    }
+
+    return [PSCustomObject]@{
+        ModFile = $ModFile.Name
+        ModPath = $ModFile.FullName
+        Hash = $hash
+        Source = $verified.Source
+        Name = $verified.Name
+        Slug = $verified.Slug
+    }
 }
 
 <#
@@ -733,12 +865,16 @@ Sie gibt eine Zusammenfassung mit Mod-Anzahl und Trefferliste zurueck.
 function Start-ModScan {
     param (
         [Parameter(Mandatory = $true)]
-        [string]$FolderPath
+        [string]$FolderPath,
+
+        [Parameter(Mandatory = $true)]
+        [bool]$UseOnlineVerification
     )
 
     $allFindings = New-Object System.Collections.Generic.List[object]
     $obfuscatedMods = New-Object System.Collections.Generic.List[object]
     $bypassFindings = New-Object System.Collections.Generic.List[object]
+    $verifiedMods = New-Object System.Collections.Generic.List[object]
     $patterns = Get-SuspiciousPatterns
     # Das @(...)-Konstrukt sorgt dafuer, dass auch genau eine gefundene Mod
     # als Liste behandelt wird. Dadurch funktioniert $mods.Count immer.
@@ -754,11 +890,19 @@ function Start-ModScan {
     $iconMagnifier = [char]::ConvertFromUtf32(0x1F50E)
     $iconZap = [char]::ConvertFromUtf32(0x26A1)
 
-    Write-Host ("{0} Pass 1 - Hash verification (offline; Modrinth + Megabase disabled)..." -f $iconSearch) -ForegroundColor Cyan
+    if ($UseOnlineVerification) {
+        Write-Host ("{0} Pass 1 - Hash verification (Modrinth + Megabase)..." -f $iconSearch) -ForegroundColor Cyan
+    }
+    else {
+        Write-Host ("{0} Pass 1 - Hash verification (offline; Modrinth + Megabase disabled)..." -f $iconSearch) -ForegroundColor Cyan
+    }
+
     foreach ($mod in $mods) {
-        # Der Hash wird nur lokal berechnet. Er wird nicht hochgeladen und nicht
-        # mit Online-Datenbanken verglichen.
-        $null = Get-FileHash -LiteralPath $mod.FullName -Algorithm SHA1 -ErrorAction SilentlyContinue
+        $verification = Get-ModVerification -ModFile $mod -UseOnlineVerification $UseOnlineVerification
+
+        if ($null -ne $verification) {
+            $verifiedMods.Add($verification)
+        }
     }
 
     Write-Host ("{0} Pass 2 - Deep-scanning all {1} mods..." -f $iconMicroscope, $mods.Count) -ForegroundColor Cyan
@@ -794,10 +938,12 @@ function Start-ModScan {
     return [PSCustomObject]@{
         ModCount = $mods.Count
         Mods = [object[]]$mods
+        VerifiedMods = [object[]]$verifiedMods.ToArray()
         Findings = [object[]]$allFindings.ToArray()
         ObfuscatedMods = [object[]]$obfuscatedMods.ToArray()
         BypassFindings = [object[]]$bypassFindings.ToArray()
         JvmIssues = [object[]]$jvmIssues
+        NetworkUsed = $UseOnlineVerification
     }
 }
 <#
@@ -817,6 +963,9 @@ function Show-ScanResults {
         [object[]]$Mods = @(),
 
         [AllowEmptyCollection()]
+        [object[]]$VerifiedMods = @(),
+
+        [AllowEmptyCollection()]
         [object[]]$Findings = @(),
 
         [AllowEmptyCollection()]
@@ -826,8 +975,15 @@ function Show-ScanResults {
         [object[]]$BypassFindings = @(),
 
         [AllowEmptyCollection()]
-        [object[]]$JvmIssues = @()
+        [object[]]$JvmIssues = @(),
+
+        [Parameter(Mandatory = $true)]
+        [bool]$NetworkUsed
     )
+
+    if ($null -eq $VerifiedMods) {
+        $VerifiedMods = @()
+    }
 
     if ($null -eq $Findings) {
         $Findings = @()
@@ -846,6 +1002,7 @@ function Show-ScanResults {
     }
 
     $findingCount = $Findings.Count
+    $verifiedPaths = @($VerifiedMods | Select-Object -ExpandProperty ModPath -Unique)
     $suspiciousPaths = @($Findings | Select-Object -ExpandProperty ModPath -Unique)
     $bypassPaths = @($BypassFindings | Select-Object -ExpandProperty ModPath -Unique)
     $obfuscatedPaths = @($ObfuscatedMods | Select-Object -ExpandProperty ModPath -Unique)
@@ -870,12 +1027,35 @@ function Show-ScanResults {
             if ($flaggedPaths -contains $mod.FullName) {
                 Write-Host ("  {0,-4} {1,-10} {2}" -f $warnMark, "FLAGGED", $mod.Name) -ForegroundColor Red
             }
+            elseif ($verifiedPaths -contains $mod.FullName) {
+                Write-Host ("  {0,-4} {1,-10} {2}" -f $okMark, "VERIFIED", $mod.Name) -ForegroundColor Green
+            }
             elseif ($reviewPaths -contains $mod.FullName) {
                 Write-Host ("  {0,-4} {1,-10} {2}" -f $reviewMark, "REVIEW", $mod.Name) -ForegroundColor Yellow
             }
             else {
                 Write-Host ("  {0,-4} {1,-10} {2}" -f $okMark, "CLEAN", $mod.Name) -ForegroundColor Green
             }
+        }
+    }
+
+    Write-Host ""
+
+    Write-Host ("  *  VERIFIED MODS  ({0})" -f $VerifiedMods.Count) -ForegroundColor Green
+    Write-Line
+
+    if ($VerifiedMods.Count -eq 0) {
+        if ($NetworkUsed) {
+            Write-Host "  None" -ForegroundColor DarkGray
+        }
+        else {
+            Write-Host "  Disabled - online verification was not enabled" -ForegroundColor DarkGray
+        }
+    }
+    else {
+        foreach ($mod in @($VerifiedMods | Sort-Object ModFile)) {
+            Write-Host ("  [ OK ] {0}" -f $mod.ModFile) -ForegroundColor Green
+            Write-Host ("         {0}: {1}" -f $mod.Source, $mod.Name) -ForegroundColor DarkGray
         }
     }
 
@@ -983,13 +1163,14 @@ function Show-ScanResults {
     Write-Host "SUMMARY" -ForegroundColor Cyan
     Write-Line
     Write-Host ("  Total files scanned: {0}" -f $ModCount) -ForegroundColor White
-    Write-Host ("  Verified mods:       0") -ForegroundColor White
+    Write-Host ("  Verified mods:       {0}" -f $VerifiedMods.Count) -ForegroundColor White
     Write-Host ("  Clean mods:          {0}" -f ($Mods.Count - $flaggedPaths.Count - $reviewPaths.Count)) -ForegroundColor White
     Write-Host ("  Suspicious mods:     {0}" -f $suspiciousPaths.Count) -ForegroundColor White
     Write-Host ("  Bypass/Injected:     {0}" -f $bypassPaths.Count) -ForegroundColor White
     Write-Host ("  Obfuscated mods:     {0}" -f $ObfuscatedMods.Count) -ForegroundColor White
     Write-Host ("  JVM issues:          {0}" -f $JvmIssues.Count) -ForegroundColor White
-    Write-Host ("  Network used:        0") -ForegroundColor White
+    $networkNumber = if ($NetworkUsed) { 1 } else { 0 }
+    Write-Host ("  Network used:        {0}" -f $networkNumber) -ForegroundColor White
     Write-Host ("  Files changed:       0") -ForegroundColor White
     Write-Line
 
@@ -1012,8 +1193,9 @@ Diese Funktion ist der Hauptablauf:
 5. JAR/ZIP-Dateien read-only pruefen.
 6. Ergebnisse anzeigen.
 
-Es gibt keine Netzwerkverbindung, keine Datei-Aenderung, keine Registry-Aenderung,
-keine Autostarts und keine Hintergrundprozesse.
+Eine Netzwerkverbindung wird nur benutzt, wenn der Benutzer die Online-
+Verifikation mit y aktiviert. Es gibt keine Datei-Aenderung, keine
+Registry-Aenderung, keine Autostarts und keine Hintergrundprozesse.
 #>
 function Start-OpenModScanner {
     Show-Banner
@@ -1041,9 +1223,11 @@ function Start-OpenModScanner {
         Write-Host ("   {0}" -f $line) -ForegroundColor DarkGray
     }
 
-    $scanResult = Start-ModScan -FolderPath $folderPath
+    $useOnlineVerification = Get-OnlineVerificationChoice
 
-    Show-ScanResults -ModCount $scanResult.ModCount -Mods $scanResult.Mods -Findings $scanResult.Findings -ObfuscatedMods $scanResult.ObfuscatedMods -BypassFindings $scanResult.BypassFindings -JvmIssues $scanResult.JvmIssues
+    $scanResult = Start-ModScan -FolderPath $folderPath -UseOnlineVerification $useOnlineVerification
+
+    Show-ScanResults -ModCount $scanResult.ModCount -Mods $scanResult.Mods -VerifiedMods $scanResult.VerifiedMods -Findings $scanResult.Findings -ObfuscatedMods $scanResult.ObfuscatedMods -BypassFindings $scanResult.BypassFindings -JvmIssues $scanResult.JvmIssues -NetworkUsed $scanResult.NetworkUsed
 }
 
 Start-OpenModScanner
