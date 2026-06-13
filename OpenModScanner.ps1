@@ -242,7 +242,9 @@ function Start-OpenModScanner {
     }
 
     $patterns = Get-SuspiciousNamePatterns
-    $matches = Find-SuspiciousModFiles -FolderPath $folderPath -Patterns $patterns
+    # Das @(...)-Konstrukt sorgt dafuer, dass PowerShell immer eine Liste erzeugt.
+    # Ohne diese Klammerung kann PowerShell bei null Treffern den Wert $null liefern.
+    $matches = @(Find-SuspiciousModFiles -FolderPath $folderPath -Patterns $patterns)
 
     Show-ScanResults -Matches $matches
 }
