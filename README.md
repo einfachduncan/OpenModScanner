@@ -51,31 +51,10 @@ Minecraft Mod Security Scanner
 Enter path to the mods folder: (press Enter to use default)
 PATH: C:\Users\Name\AppData\Roaming\.minecraft\mods
 
-Scanning directory: C:\Users\Name\AppData\Roaming\.minecraft\mods
-
-Found 42 JAR files to analyze
-
-Pass 1 - File discovery...
-Pass 2 - Deep-scanning mod archives...
-Pass 3 - Suspicious string scan...
-Pass 4 - Read-only safety check...
-Pass 5 - JVM process overview...
-   OK  Scanner stayed read-only
-
-  *  UNKNOWN MODS  (42)
-  [ ? ] example.jar
-        Source: local file / not verified online
-
   *  SUSPICIOUS MODS  (0)
-  None
+  No suspicious mods found.
 
-SUMMARY
-  Total files scanned: 42
-  Unknown mods:        42
-  Suspicious mods:     0
-  Suspicious hits:     0
-  Network used:        0
-  Files changed:       0
+Analysis complete.
 ```
 
 Mit Treffern:

@@ -458,31 +458,9 @@ function Start-ModScan {
 
     $allFindings = New-Object System.Collections.Generic.List[object]
     $patterns = Get-SuspiciousPatterns
-    $uptimeLines = @(Get-MinecraftUptimeText)
     # Das @(...)-Konstrukt sorgt dafuer, dass auch genau eine gefundene Mod
     # als Liste behandelt wird. Dadurch funktioniert $mods.Count immer.
     $mods = @(Get-ModFiles -FolderPath $FolderPath)
-
-    if ($mods.Count -eq 0) {
-        Write-WarningMessage "Keine .jar- oder .zip-Mod-Dateien gefunden. Bitte pruefe, ob wirklich der mods-Ordner des richtigen Profils ausgewaehlt wurde."
-    }
-
-    Write-Host ""
-    Write-Host "{ Minecraft Uptime }" -ForegroundColor Cyan
-    foreach ($line in $uptimeLines) {
-        Write-Host ("   {0}" -f $line) -ForegroundColor DarkGray
-    }
-
-    Write-Host ""
-    Write-Host ("Found {0} JAR files to analyze" -f $mods.Count) -ForegroundColor Cyan
-    Write-Host ""
-    Write-Host "Pass 1 - File discovery..." -ForegroundColor Cyan
-    Write-Host "Pass 2 - Deep-scanning mod archives..." -ForegroundColor Cyan
-    Write-Host "Pass 3 - Suspicious string scan..." -ForegroundColor Cyan
-    Write-Host "Pass 4 - Read-only safety check..." -ForegroundColor Cyan
-    Write-Host "Pass 5 - JVM process overview..." -ForegroundColor Cyan
-    Write-Host "   OK  Scanner stayed read-only" -ForegroundColor Green
-    Write-Host ""
 
     foreach ($mod in $mods) {
         foreach ($finding in @(Scan-ModArchive -ModFile $mod -Patterns $patterns)) {
@@ -500,8 +478,9 @@ function Start-ModScan {
 <#
 Funktion: Show-ScanResults
 
-Diese Funktion zeigt das Ergebnis bewusst kurz und uebersichtlich an.
-Treffer werden pro Mod gruppiert, damit die Ausgabe nicht unnoetig lang wird.
+Diese Funktion zeigt nur das Wesentliche an.
+Wenn nichts gefunden wird, zeigt sie nur eine kurze Entwarnung.
+Wenn etwas gefunden wird, zeigt sie nur die geflaggten Mods.
 #>
 function Show-ScanResults {
     param (
@@ -520,71 +499,39 @@ function Show-ScanResults {
     }
 
     $findingCount = $Findings.Count
-    $suspiciousPaths = @($Findings | Select-Object -ExpandProperty ModPath -Unique)
-    $unknownMods = @($Mods | Where-Object { $suspiciousPaths -notcontains $_.FullName })
-
-    Write-Host ("  *  UNKNOWN MODS  ({0})" -f $unknownMods.Count) -ForegroundColor Yellow
-    Write-Line
-
-    if ($unknownMods.Count -eq 0) {
-        Write-Host "  None" -ForegroundColor DarkGray
-    }
-    else {
-        foreach ($mod in $unknownMods) {
-            Write-Host ("  [ ? ] {0}" -f $mod.Name) -ForegroundColor White
-            Write-Host "        Source: local file / not verified online" -ForegroundColor DarkGray
-            Write-Host ""
-        }
-    }
-
-    Write-Host ""
 
     if ($findingCount -eq 0) {
         Write-Host "  *  SUSPICIOUS MODS  (0)" -ForegroundColor Green
         Write-Line
-        Write-Host "  None" -ForegroundColor Green
+        Write-Host "  No suspicious mods found." -ForegroundColor Green
+        Write-Host ""
+        Write-Host "Analysis complete." -ForegroundColor Green
+        return
     }
-    else {
-        $groupedFindings = $Findings | Group-Object -Property ModPath
 
-        Write-Host ("  *  SUSPICIOUS MODS  ({0})" -f $groupedFindings.Count) -ForegroundColor Red
-        Write-Line
+    $groupedFindings = $Findings | Group-Object -Property ModPath
 
-        foreach ($group in $groupedFindings) {
-            $firstFinding = $group.Group[0]
-            Write-Host ""
-            Write-Host ("  FLAGGED   {0}" -f $firstFinding.ModFile) -ForegroundColor Red
-            Write-Host ("  Path:     {0}" -f $firstFinding.ModPath) -ForegroundColor DarkGray
-            Write-Host ""
-            Write-Host "  PATTERNS" -ForegroundColor Yellow
+    Write-Host ("  *  SUSPICIOUS MODS  ({0})" -f $groupedFindings.Count) -ForegroundColor Red
+    Write-Line
 
-            foreach ($finding in $group.Group) {
-                Write-Host ("    {0}  [{1}]" -f $finding.Pattern, $finding.Level) -ForegroundColor White
-                Write-Host ("      Where: {0}" -f $finding.Where) -ForegroundColor Gray
-                Write-Host ("      Why:   {0}" -f $finding.Reason) -ForegroundColor Gray
-            }
+    foreach ($group in $groupedFindings) {
+        $firstFinding = $group.Group[0]
+        Write-Host ""
+        Write-Host ("  FLAGGED   {0}" -f $firstFinding.ModFile) -ForegroundColor Red
+        Write-Host ""
+        Write-Host "  PATTERNS" -ForegroundColor Yellow
 
-            Write-Line
+        foreach ($finding in $group.Group) {
+            Write-Host ("    {0}  [{1}]" -f $finding.Pattern, $finding.Level) -ForegroundColor White
+            Write-Host ("      Where: {0}" -f $finding.Where) -ForegroundColor Gray
+            Write-Host ("      Why:   {0}" -f $finding.Reason) -ForegroundColor Gray
         }
+
+        Write-Line
     }
 
     Write-Host ""
-    Write-Host "SUMMARY" -ForegroundColor Cyan
-    Write-Line
-    Write-Host ("  Total files scanned: {0}" -f $ModCount) -ForegroundColor White
-    Write-Host ("  Unknown mods:        {0}" -f $unknownMods.Count) -ForegroundColor White
-    Write-Host ("  Suspicious mods:     {0}" -f $suspiciousPaths.Count) -ForegroundColor White
-    Write-Host ("  Suspicious hits:     {0}" -f $findingCount) -ForegroundColor White
-    Write-Host ("  Network used:        0") -ForegroundColor White
-    Write-Host ("  Files changed:       0") -ForegroundColor White
-    Write-Line
-
-    if ($findingCount -eq 0) {
-        Write-Host "Analysis complete. No suspicious hints found." -ForegroundColor Green
-    }
-    else {
-        Write-Host "Analysis complete. Review flagged mods before launching Minecraft." -ForegroundColor Yellow
-    }
+    Write-Host "Analysis complete. Review flagged mods before launching Minecraft." -ForegroundColor Yellow
 }
 
 <#
@@ -619,8 +566,6 @@ function Start-OpenModScanner {
         return
     }
 
-    Write-Host ""
-    Write-Host ("Scanning directory: {0}" -f $folderPath) -ForegroundColor Cyan
     $scanResult = Start-ModScan -FolderPath $folderPath
 
     Show-ScanResults -ModCount $scanResult.ModCount -Mods $scanResult.Mods -Findings $scanResult.Findings
