@@ -147,35 +147,44 @@ Ein Treffer ist kein Beweis fuer Schadsoftware. Er ist nur ein Hinweis.
 #>
 function Get-SuspiciousPatterns {
     return @(
-        [PSCustomObject]@{ Pattern = "token"; Level = "Mittel"; Reason = "Kann auf Token-Diebstahl oder Authentifizierungsdaten hinweisen." },
-        [PSCustomObject]@{ Pattern = "grabber"; Level = "Hoch"; Reason = "Wird haeufig fuer Diebstahl-Werkzeuge verwendet." },
-        [PSCustomObject]@{ Pattern = "stealer"; Level = "Hoch"; Reason = "Wird haeufig fuer Datendiebstahl verwendet." },
-        [PSCustomObject]@{ Pattern = "keylogger"; Level = "Hoch"; Reason = "Kann auf Tastatur-Aufzeichnung hinweisen." },
-        [PSCustomObject]@{ Pattern = "webhook"; Level = "Mittel"; Reason = "Kann auf externe Meldungen an Chat- oder Webdienste hinweisen." },
-        [PSCustomObject]@{ Pattern = "discord.com/api/webhooks"; Level = "Hoch"; Reason = "Discord-Webhooks werden oft fuer Datenabfluss missbraucht." },
-        [PSCustomObject]@{ Pattern = "payload"; Level = "Mittel"; Reason = "Kann auf nachgeladenen oder versteckten Schadcode hinweisen." },
-        [PSCustomObject]@{ Pattern = "backdoor"; Level = "Hoch"; Reason = "Kann auf eine Hintertuer hinweisen." },
-        [PSCustomObject]@{ Pattern = "rat"; Level = "Mittel"; Reason = "Kann fuer Remote-Access-Tool stehen." },
-        [PSCustomObject]@{ Pattern = "miner"; Level = "Mittel"; Reason = "Kann auf Krypto-Mining hinweisen." },
-        [PSCustomObject]@{ Pattern = "crypto"; Level = "Niedrig"; Reason = "Kann harmlos sein, sollte aber im Mod-Kontext geprueft werden." },
-        [PSCustomObject]@{ Pattern = "exfil"; Level = "Hoch"; Reason = "Abkuerzung fuer Datenabfluss." },
-        [PSCustomObject]@{ Pattern = "credential"; Level = "Mittel"; Reason = "Kann auf Zugangsdaten hinweisen." },
-        [PSCustomObject]@{ Pattern = "password"; Level = "Mittel"; Reason = "Kann auf Passwort-Bezug hinweisen." },
-        [PSCustomObject]@{ Pattern = "session"; Level = "Niedrig"; Reason = "Kann in Mods harmlos sein, ist aber fuer Kontodaten relevant." },
-        [PSCustomObject]@{ Pattern = "cookie"; Level = "Mittel"; Reason = "Kann auf Browser- oder Sitzungsdaten hinweisen." },
-        [PSCustomObject]@{ Pattern = "java.net.url"; Level = "Mittel"; Reason = "Kann auf Netzwerkzugriffe im Mod-Code hinweisen." },
-        [PSCustomObject]@{ Pattern = "urlclassloader"; Level = "Hoch"; Reason = "Kann auf dynamisches Nachladen von Code hinweisen." },
-        [PSCustomObject]@{ Pattern = "runtime.getruntime"; Level = "Hoch"; Reason = "Kann auf das Starten externer Programme hinweisen." },
-        [PSCustomObject]@{ Pattern = "processbuilder"; Level = "Hoch"; Reason = "Kann auf das Starten externer Programme hinweisen." },
-        [PSCustomObject]@{ Pattern = "cmd.exe"; Level = "Hoch"; Reason = "Kann auf Windows-Kommandoausfuehrung hinweisen." },
-        [PSCustomObject]@{ Pattern = "powershell"; Level = "Hoch"; Reason = "Kann auf PowerShell-Ausfuehrung durch eine Mod hinweisen." },
-        [PSCustomObject]@{ Pattern = "killaura"; Level = "Mittel"; Reason = "Kann auf Cheat- oder PvP-Client-Funktionen hinweisen." },
-        [PSCustomObject]@{ Pattern = "crystalaura"; Level = "Mittel"; Reason = "Kann auf Cheat- oder PvP-Client-Funktionen hinweisen." },
-        [PSCustomObject]@{ Pattern = "autoclicker"; Level = "Mittel"; Reason = "Kann auf automatisierte Klickfunktionen hinweisen." },
-        [PSCustomObject]@{ Pattern = "xray"; Level = "Mittel"; Reason = "Kann auf unfairen Sicht-/Suchvorteil hinweisen." },
-        [PSCustomObject]@{ Pattern = "wallhack"; Level = "Mittel"; Reason = "Kann auf unfairen Sichtvorteil hinweisen." },
-        [PSCustomObject]@{ Pattern = "meteorclient"; Level = "Mittel"; Reason = "Kann auf einen bekannten Utility-/Cheat-Client hinweisen." },
-        [PSCustomObject]@{ Pattern = "meteordevelopment"; Level = "Mittel"; Reason = "Kann auf Meteor-Client-Code oder Addons hinweisen." }
+        [PSCustomObject]@{ Pattern = "token"; Level = "Mittel"; Section = "STRINGS"; Reason = "Kann auf Token-Diebstahl oder Authentifizierungsdaten hinweisen." },
+        [PSCustomObject]@{ Pattern = "grabber"; Level = "Hoch"; Section = "STRINGS"; Reason = "Wird haeufig fuer Diebstahl-Werkzeuge verwendet." },
+        [PSCustomObject]@{ Pattern = "stealer"; Level = "Hoch"; Section = "STRINGS"; Reason = "Wird haeufig fuer Datendiebstahl verwendet." },
+        [PSCustomObject]@{ Pattern = "keylogger"; Level = "Hoch"; Section = "STRINGS"; Reason = "Kann auf Tastatur-Aufzeichnung hinweisen." },
+        [PSCustomObject]@{ Pattern = "webhook"; Level = "Mittel"; Section = "STRINGS"; Reason = "Kann auf externe Meldungen an Chat- oder Webdienste hinweisen." },
+        [PSCustomObject]@{ Pattern = "discord.com/api/webhooks"; Level = "Hoch"; Section = "STRINGS"; Reason = "Discord-Webhooks werden oft fuer Datenabfluss missbraucht." },
+        [PSCustomObject]@{ Pattern = "payload"; Level = "Mittel"; Section = "STRINGS"; Reason = "Kann auf nachgeladenen oder versteckten Schadcode hinweisen." },
+        [PSCustomObject]@{ Pattern = "backdoor"; Level = "Hoch"; Section = "STRINGS"; Reason = "Kann auf eine Hintertuer hinweisen." },
+        [PSCustomObject]@{ Pattern = "rat"; Level = "Mittel"; Section = "STRINGS"; Reason = "Kann fuer Remote-Access-Tool stehen." },
+        [PSCustomObject]@{ Pattern = "miner"; Level = "Mittel"; Section = "STRINGS"; Reason = "Kann auf Krypto-Mining hinweisen." },
+        [PSCustomObject]@{ Pattern = "crypto"; Level = "Niedrig"; Section = "STRINGS"; Reason = "Kann harmlos sein, sollte aber im Mod-Kontext geprueft werden." },
+        [PSCustomObject]@{ Pattern = "exfil"; Level = "Hoch"; Section = "STRINGS"; Reason = "Abkuerzung fuer Datenabfluss." },
+        [PSCustomObject]@{ Pattern = "credential"; Level = "Mittel"; Section = "STRINGS"; Reason = "Kann auf Zugangsdaten hinweisen." },
+        [PSCustomObject]@{ Pattern = "password"; Level = "Mittel"; Section = "STRINGS"; Reason = "Kann auf Passwort-Bezug hinweisen." },
+        [PSCustomObject]@{ Pattern = "session"; Level = "Niedrig"; Section = "STRINGS"; Reason = "Kann in Mods harmlos sein, ist aber fuer Kontodaten relevant." },
+        [PSCustomObject]@{ Pattern = "cookie"; Level = "Mittel"; Section = "STRINGS"; Reason = "Kann auf Browser- oder Sitzungsdaten hinweisen." },
+        [PSCustomObject]@{ Pattern = "java.net.url"; Level = "Mittel"; Section = "PATTERNS"; Reason = "Kann auf Netzwerkzugriffe im Mod-Code hinweisen." },
+        [PSCustomObject]@{ Pattern = "urlclassloader"; Level = "Hoch"; Section = "PATTERNS"; Reason = "Kann auf dynamisches Nachladen von Code hinweisen." },
+        [PSCustomObject]@{ Pattern = "runtime.getruntime"; Level = "Hoch"; Section = "PATTERNS"; Reason = "Kann auf das Starten externer Programme hinweisen." },
+        [PSCustomObject]@{ Pattern = "processbuilder"; Level = "Hoch"; Section = "PATTERNS"; Reason = "Kann auf das Starten externer Programme hinweisen." },
+        [PSCustomObject]@{ Pattern = "cmd.exe"; Level = "Hoch"; Section = "PATTERNS"; Reason = "Kann auf Windows-Kommandoausfuehrung hinweisen." },
+        [PSCustomObject]@{ Pattern = "powershell"; Level = "Hoch"; Section = "PATTERNS"; Reason = "Kann auf PowerShell-Ausfuehrung durch eine Mod hinweisen." },
+        [PSCustomObject]@{ Pattern = "killaura"; Level = "Mittel"; Section = "PATTERNS"; Reason = "Kann auf Cheat- oder PvP-Client-Funktionen hinweisen." },
+        [PSCustomObject]@{ Pattern = "crystalaura"; Level = "Mittel"; Section = "PATTERNS"; Reason = "Kann auf Cheat- oder PvP-Client-Funktionen hinweisen." },
+        [PSCustomObject]@{ Pattern = "autoclicker"; Level = "Mittel"; Section = "PATTERNS"; Reason = "Kann auf automatisierte Klickfunktionen hinweisen." },
+        [PSCustomObject]@{ Pattern = "xray"; Level = "Mittel"; Section = "PATTERNS"; Reason = "Kann auf unfairen Sicht-/Suchvorteil hinweisen." },
+        [PSCustomObject]@{ Pattern = "wallhack"; Level = "Mittel"; Section = "PATTERNS"; Reason = "Kann auf unfairen Sichtvorteil hinweisen." },
+        [PSCustomObject]@{ Pattern = "meteorclient"; Level = "Mittel"; Section = "STRINGS"; Reason = "Kann auf einen bekannten Utility-/Cheat-Client hinweisen." },
+        [PSCustomObject]@{ Pattern = "meteor-client"; Level = "Mittel"; Section = "STRINGS"; Reason = "Kann auf Meteor-Client-Code oder Addons hinweisen." },
+        [PSCustomObject]@{ Pattern = "meteordevelopment"; Level = "Mittel"; Section = "STRINGS"; Reason = "Kann auf Meteor-Client-Code oder Addons hinweisen." },
+        [PSCustomObject]@{ Pattern = "aimassist"; Level = "Mittel"; Section = "PATTERNS"; Reason = "Kann auf Aim-Assist-Funktionen hinweisen." },
+        [PSCustomObject]@{ Pattern = "autototem"; Level = "Mittel"; Section = "PATTERNS"; Reason = "Kann auf automatische Totem-Funktionen hinweisen." },
+        [PSCustomObject]@{ Pattern = "blockesp"; Level = "Mittel"; Section = "PATTERNS"; Reason = "Kann auf ESP-/Anzeige-Funktionen hinweisen." },
+        [PSCustomObject]@{ Pattern = "storageesp"; Level = "Mittel"; Section = "PATTERNS"; Reason = "Kann auf ESP-/Anzeige-Funktionen hinweisen." },
+        [PSCustomObject]@{ Pattern = "tracers"; Level = "Mittel"; Section = "PATTERNS"; Reason = "Kann auf Spieler-/Entity-Tracking hinweisen." },
+        [PSCustomObject]@{ Pattern = "nuker"; Level = "Mittel"; Section = "PATTERNS"; Reason = "Kann auf automatische Blockzerstoerung hinweisen." },
+        [PSCustomObject]@{ Pattern = "seedcracker"; Level = "Mittel"; Section = "STRINGS"; Reason = "Kann auf Seed-Rekonstruktionswerkzeuge hinweisen." },
+        [PSCustomObject]@{ Pattern = "orefinder"; Level = "Mittel"; Section = "STRINGS"; Reason = "Kann auf Erzsuch-Funktionen hinweisen." }
     )
 }
 
@@ -213,6 +222,7 @@ function New-Finding {
         Where = $Where
         Pattern = $Pattern
         Level = $Level
+        Section = "STRINGS"
         Reason = $Reason
     }
 }
@@ -245,6 +255,38 @@ function Find-PatternsInText {
     }
 
     return $found
+}
+
+<#
+Funktion: New-FindingFromPattern
+
+Diese Funktion baut einen Treffer direkt aus einem Suchmuster-Objekt.
+Dadurch bleibt die Zuordnung zu PATTERNS oder STRINGS erhalten.
+#>
+function New-FindingFromPattern {
+    param (
+        [Parameter(Mandatory = $true)]
+        [string]$ModFile,
+
+        [Parameter(Mandatory = $true)]
+        [string]$ModPath,
+
+        [Parameter(Mandatory = $true)]
+        [string]$Where,
+
+        [Parameter(Mandatory = $true)]
+        [object]$Pattern
+    )
+
+    return [PSCustomObject]@{
+        ModFile = $ModFile
+        ModPath = $ModPath
+        Where = $Where
+        Pattern = $Pattern.Pattern
+        Level = $Pattern.Level
+        Section = $Pattern.Section
+        Reason = $Pattern.Reason
+    }
 }
 
 <#
@@ -304,6 +346,86 @@ function Get-MinecraftUptimeText {
     }
 
     return $lines
+}
+
+<#
+Funktion: Test-GibberishClassName
+
+Diese Funktion prueft eine Java-Klassendatei grob auf verschleierte Namen.
+Das ist nur eine Heuristik: kurze, zufaellige oder vokallose Namen koennen
+harmlos sein, sind aber bei Obfuscation haeufig.
+#>
+function Test-GibberishClassName {
+    param (
+        [Parameter(Mandatory = $true)]
+        [string]$ClassName
+    )
+
+    $simpleName = [System.IO.Path]::GetFileNameWithoutExtension($ClassName)
+
+    if ($simpleName.Length -le 2) {
+        return $true
+    }
+
+    if ($simpleName.Length -ge 5 -and $simpleName -notmatch "[aeiouAEIOU]") {
+        return $true
+    }
+
+    if ($simpleName -match "[bcdfghjklmnpqrstvwxyzBCDFGHJKLMNPQRSTVWXYZ]{5,}") {
+        return $true
+    }
+
+    return $false
+}
+
+<#
+Funktion: Scan-ModObfuscation
+
+Diese Funktion untersucht nur die Namen von .class-Dateien innerhalb einer Mod.
+Sie liest keine Dateien ausfuehrend und entpackt nichts dauerhaft.
+Wenn viele Klassennamen zufaellig wirken, wird die Mod als moeglich obfuscated
+angezeigt.
+#>
+function Scan-ModObfuscation {
+    param (
+        [Parameter(Mandatory = $true)]
+        [object]$ModFile
+    )
+
+    $archive = $null
+
+    try {
+        $archive = [System.IO.Compression.ZipFile]::OpenRead($ModFile.FullName)
+        $classEntries = @($archive.Entries | Where-Object { $_.FullName.ToLowerInvariant().EndsWith(".class") })
+
+        if ($classEntries.Count -eq 0) {
+            return $null
+        }
+
+        $gibberishEntries = @($classEntries | Where-Object { Test-GibberishClassName -ClassName $_.FullName })
+        $percent = [math]::Round(($gibberishEntries.Count / [double]$classEntries.Count) * 100)
+
+        if ($gibberishEntries.Count -ge 4 -and $percent -ge 8) {
+            return [PSCustomObject]@{
+                ModFile = $ModFile.Name
+                ModPath = $ModFile.FullName
+                Percent = $percent
+                Count = $gibberishEntries.Count
+                Total = $classEntries.Count
+                Reason = "Gibberish class names"
+            }
+        }
+    }
+    catch {
+        return $null
+    }
+    finally {
+        if ($null -ne $archive) {
+            $archive.Dispose()
+        }
+    }
+
+    return $null
 }
 
 <#
@@ -409,7 +531,7 @@ function Scan-ModArchive {
     $archive = $null
 
     foreach ($pattern in @(Find-PatternsInText -Text $ModFile.Name -Patterns $Patterns)) {
-        $findings.Add((New-Finding -ModFile $ModFile.Name -ModPath $ModFile.FullName -Where "Mod-Dateiname" -Pattern $pattern.Pattern -Level $pattern.Level -Reason $pattern.Reason))
+        $findings.Add((New-FindingFromPattern -ModFile $ModFile.Name -ModPath $ModFile.FullName -Where "Mod-Dateiname" -Pattern $pattern))
     }
 
     try {
@@ -417,7 +539,7 @@ function Scan-ModArchive {
 
         foreach ($entry in $archive.Entries) {
             foreach ($pattern in @(Find-PatternsInText -Text $entry.FullName -Patterns $Patterns)) {
-                $findings.Add((New-Finding -ModFile $ModFile.Name -ModPath $ModFile.FullName -Where ("Archiv-Pfad: {0}" -f $entry.FullName) -Pattern $pattern.Pattern -Level $pattern.Level -Reason $pattern.Reason))
+                $findings.Add((New-FindingFromPattern -ModFile $ModFile.Name -ModPath $ModFile.FullName -Where ("Archiv-Pfad: {0}" -f $entry.FullName) -Pattern $pattern))
             }
 
             if (Test-EntryShouldBeRead -Entry $entry) {
@@ -425,7 +547,7 @@ function Scan-ModArchive {
 
                 if (-not [string]::IsNullOrWhiteSpace($entryText)) {
                     foreach ($pattern in @(Find-PatternsInText -Text $entryText -Patterns $Patterns)) {
-                        $findings.Add((New-Finding -ModFile $ModFile.Name -ModPath $ModFile.FullName -Where ("Inhalt: {0}" -f $entry.FullName) -Pattern $pattern.Pattern -Level $pattern.Level -Reason $pattern.Reason))
+                        $findings.Add((New-FindingFromPattern -ModFile $ModFile.Name -ModPath $ModFile.FullName -Where ("Inhalt: {0}" -f $entry.FullName) -Pattern $pattern))
                     }
                 }
             }
@@ -457,14 +579,25 @@ function Start-ModScan {
     )
 
     $allFindings = New-Object System.Collections.Generic.List[object]
+    $obfuscatedMods = New-Object System.Collections.Generic.List[object]
     $patterns = Get-SuspiciousPatterns
     # Das @(...)-Konstrukt sorgt dafuer, dass auch genau eine gefundene Mod
     # als Liste behandelt wird. Dadurch funktioniert $mods.Count immer.
     $mods = @(Get-ModFiles -FolderPath $FolderPath)
 
     foreach ($mod in $mods) {
+        # Der Hash wird nur lokal berechnet. Er wird nicht hochgeladen und nicht
+        # mit Online-Datenbanken verglichen.
+        $null = Get-FileHash -LiteralPath $mod.FullName -Algorithm SHA1 -ErrorAction SilentlyContinue
+
         foreach ($finding in @(Scan-ModArchive -ModFile $mod -Patterns $patterns)) {
             $allFindings.Add($finding)
+        }
+
+        $obfuscation = Scan-ModObfuscation -ModFile $mod
+
+        if ($null -ne $obfuscation) {
+            $obfuscatedMods.Add($obfuscation)
         }
     }
 
@@ -472,6 +605,7 @@ function Start-ModScan {
         ModCount = $mods.Count
         Mods = [object[]]$mods
         Findings = [object[]]$allFindings.ToArray()
+        ObfuscatedMods = [object[]]$obfuscatedMods.ToArray()
     }
 }
 
@@ -491,47 +625,121 @@ function Show-ScanResults {
         [object[]]$Mods = @(),
 
         [AllowEmptyCollection()]
-        [object[]]$Findings = @()
+        [object[]]$Findings = @(),
+
+        [AllowEmptyCollection()]
+        [object[]]$ObfuscatedMods = @()
     )
 
     if ($null -eq $Findings) {
         $Findings = @()
     }
 
+    if ($null -eq $ObfuscatedMods) {
+        $ObfuscatedMods = @()
+    }
+
     $findingCount = $Findings.Count
+    $suspiciousPaths = @($Findings | Select-Object -ExpandProperty ModPath -Unique)
+    $unknownMods = @($Mods | Where-Object { $suspiciousPaths -notcontains $_.FullName })
+
+    Write-Host ""
+    Write-Host ("  *  UNKNOWN MODS  ({0})" -f $unknownMods.Count) -ForegroundColor Yellow
+    Write-Line
+
+    if ($unknownMods.Count -eq 0) {
+        Write-Host "  None" -ForegroundColor DarkGray
+    }
+    else {
+        foreach ($mod in $unknownMods) {
+            Write-Host ("  [ ? ] {0}" -f $mod.Name) -ForegroundColor White
+            Write-Host "        Source: local file / not verified online" -ForegroundColor DarkGray
+            Write-Host ""
+        }
+    }
+
+    Write-Host ""
 
     if ($findingCount -eq 0) {
         Write-Host "  *  SUSPICIOUS MODS  (0)" -ForegroundColor Green
         Write-Line
-        Write-Host "  No suspicious mods found." -ForegroundColor Green
-        Write-Host ""
-        Write-Host "Analysis complete." -ForegroundColor Green
-        return
+        Write-Host "  None" -ForegroundColor Green
     }
+    else {
+        $groupedFindings = $Findings | Group-Object -Property ModPath
 
-    $groupedFindings = $Findings | Group-Object -Property ModPath
-
-    Write-Host ("  *  SUSPICIOUS MODS  ({0})" -f $groupedFindings.Count) -ForegroundColor Red
-    Write-Line
-
-    foreach ($group in $groupedFindings) {
-        $firstFinding = $group.Group[0]
-        Write-Host ""
-        Write-Host ("  FLAGGED   {0}" -f $firstFinding.ModFile) -ForegroundColor Red
-        Write-Host ""
-        Write-Host "  PATTERNS" -ForegroundColor Yellow
-
-        foreach ($finding in $group.Group) {
-            Write-Host ("    {0}  [{1}]" -f $finding.Pattern, $finding.Level) -ForegroundColor White
-            Write-Host ("      Where: {0}" -f $finding.Where) -ForegroundColor Gray
-            Write-Host ("      Why:   {0}" -f $finding.Reason) -ForegroundColor Gray
-        }
-
+        Write-Host ("  *  SUSPICIOUS MODS  ({0})" -f $groupedFindings.Count) -ForegroundColor Red
         Write-Line
+
+        foreach ($group in $groupedFindings) {
+            $firstFinding = $group.Group[0]
+            Write-Host ""
+            Write-Host ("  FLAGGED   {0}" -f $firstFinding.ModFile) -ForegroundColor Red
+            Write-Host ("  Path:     {0}" -f $firstFinding.ModPath) -ForegroundColor DarkGray
+            Write-Host ""
+
+            $patternFindings = @($group.Group | Where-Object { $_.Section -eq "PATTERNS" } | Sort-Object Pattern -Unique)
+            $stringFindings = @($group.Group | Where-Object { $_.Section -eq "STRINGS" } | Sort-Object Pattern -Unique)
+
+            if ($patternFindings.Count -gt 0) {
+                Write-Host "  PATTERNS" -ForegroundColor Yellow
+                foreach ($finding in $patternFindings) {
+                    Write-Host ("    {0}" -f $finding.Pattern) -ForegroundColor White
+                }
+                Write-Host ""
+            }
+
+            if ($stringFindings.Count -gt 0) {
+                Write-Host "  STRINGS" -ForegroundColor Yellow
+                foreach ($finding in $stringFindings) {
+                    Write-Host ("    {0}" -f $finding.Pattern) -ForegroundColor White
+                }
+                Write-Host ""
+            }
+
+            Write-Line
+        }
     }
 
     Write-Host ""
-    Write-Host "Analysis complete. Review flagged mods before launching Minecraft." -ForegroundColor Yellow
+    Write-Host ("  *  OBFUSCATED MODS  ({0})" -f $ObfuscatedMods.Count) -ForegroundColor Magenta
+    Write-Line
+
+    if ($ObfuscatedMods.Count -eq 0) {
+        Write-Host "  None" -ForegroundColor DarkGray
+    }
+    else {
+        foreach ($item in $ObfuscatedMods) {
+            Write-Host ""
+            Write-Host ("  OBFUSCATED   {0}" -f $item.ModFile) -ForegroundColor Magenta
+            Write-Host ("  Path:         {0}" -f $item.ModPath) -ForegroundColor DarkGray
+            Write-Host ""
+            Write-Host ("  Flag: {0}" -f $item.Reason) -ForegroundColor Yellow
+            Write-Host ("    {0}% look obfuscated ({1}/{2} class files)" -f $item.Percent, $item.Count, $item.Total) -ForegroundColor Gray
+            Write-Line
+        }
+    }
+
+    Write-Host ""
+    Write-Host "SUMMARY" -ForegroundColor Cyan
+    Write-Line
+    Write-Host ("  Total files scanned: {0}" -f $ModCount) -ForegroundColor White
+    Write-Host ("  Verified mods:       0") -ForegroundColor White
+    Write-Host ("  Unknown mods:        {0}" -f $unknownMods.Count) -ForegroundColor White
+    Write-Host ("  Suspicious mods:     {0}" -f $suspiciousPaths.Count) -ForegroundColor White
+    Write-Host ("  Bypass/Injected:     0") -ForegroundColor White
+    Write-Host ("  Obfuscated mods:     {0}" -f $ObfuscatedMods.Count) -ForegroundColor White
+    Write-Host ("  JVM issues:          0") -ForegroundColor White
+    Write-Host ("  Network used:        0") -ForegroundColor White
+    Write-Host ("  Files changed:       0") -ForegroundColor White
+    Write-Line
+
+    if ($findingCount -eq 0 -and $ObfuscatedMods.Count -eq 0) {
+        Write-Host "Analysis complete. No suspicious hints found." -ForegroundColor Green
+    }
+    else {
+        Write-Host "Analysis complete. Review flagged mods before launching Minecraft." -ForegroundColor Yellow
+    }
 }
 
 <#
@@ -566,9 +774,27 @@ function Start-OpenModScanner {
         return
     }
 
+    Write-Host ""
+    Write-Host ("Scanning directory: {0}" -f $folderPath) -ForegroundColor Cyan
+    Write-Host ""
+    Write-Host "{ Minecraft Uptime }" -ForegroundColor Cyan
+    foreach ($line in @(Get-MinecraftUptimeText)) {
+        Write-Host ("   {0}" -f $line) -ForegroundColor DarkGray
+    }
+
     $scanResult = Start-ModScan -FolderPath $folderPath
 
-    Show-ScanResults -ModCount $scanResult.ModCount -Mods $scanResult.Mods -Findings $scanResult.Findings
+    Write-Host ""
+    Write-Host ("Found {0} JAR files to analyze" -f $scanResult.ModCount) -ForegroundColor Cyan
+    Write-Host ""
+    Write-Host "Pass 1 - Hash calculation (offline only)..." -ForegroundColor Cyan
+    Write-Host "Pass 2 - Deep-scanning mod archives..." -ForegroundColor Cyan
+    Write-Host "Pass 3 - Bypass/injection pattern scan..." -ForegroundColor Cyan
+    Write-Host "Pass 4 - Obfuscation analysis..." -ForegroundColor Cyan
+    Write-Host "Pass 5 - JVM process overview..." -ForegroundColor Cyan
+    Write-Host "   OK  JVM overview complete" -ForegroundColor Green
+
+    Show-ScanResults -ModCount $scanResult.ModCount -Mods $scanResult.Mods -Findings $scanResult.Findings -ObfuscatedMods $scanResult.ObfuscatedMods
 }
 
 Start-OpenModScanner

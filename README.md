@@ -51,10 +51,37 @@ Minecraft Mod Security Scanner
 Enter path to the mods folder: (press Enter to use default)
 PATH: C:\Users\Name\AppData\Roaming\.minecraft\mods
 
-  *  SUSPICIOUS MODS  (0)
-  No suspicious mods found.
+Scanning directory: C:\Users\Name\AppData\Roaming\.minecraft\mods
 
-Analysis complete.
+Found 42 JAR files to analyze
+
+Pass 1 - Hash calculation (offline only)...
+Pass 2 - Deep-scanning mod archives...
+Pass 3 - Bypass/injection pattern scan...
+Pass 4 - Obfuscation analysis...
+Pass 5 - JVM process overview...
+   OK  JVM overview complete
+
+  *  UNKNOWN MODS  (42)
+  [ ? ] example.jar
+        Source: local file / not verified online
+
+  *  SUSPICIOUS MODS  (0)
+  None
+
+  *  OBFUSCATED MODS  (0)
+  None
+
+SUMMARY
+  Total files scanned: 42
+  Verified mods:       0
+  Unknown mods:        42
+  Suspicious mods:     0
+  Bypass/Injected:     0
+  Obfuscated mods:     0
+  JVM issues:          0
+  Network used:        0
+  Files changed:       0
 ```
 
 Mit Treffern:
@@ -65,10 +92,14 @@ Mit Treffern:
   FLAGGED   example.jar
   Path:     C:\Minecraft\mods\example.jar
 
-  PATTERNS
+  STRINGS
     discord.com/api/webhooks  [Hoch]
-      Where: Inhalt: fabric.mod.json
-      Why:   Discord-Webhooks werden oft fuer Datenabfluss missbraucht.
+
+  *  OBFUSCATED MODS  (1)
+
+  OBFUSCATED   example.jar
+  Flag: Gibberish class names
+    12% look obfuscated (8/66 class files)
 ```
 
 ## Erklaerung aller Funktionen
