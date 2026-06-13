@@ -1,4 +1,4 @@
-<#
+﻿<#
 OpenModScanner.ps1
 
 Ein quelloffener Minecraft-Mod-Scanner fuer Windows PowerShell.
@@ -429,6 +429,132 @@ function Scan-ModObfuscation {
 }
 
 <#
+Funktion: Get-BypassInjectionPatterns
+
+Diese Funktion liefert Suchbegriffe fuer Bypass-, Agent- und Injection-Hinweise.
+Die Begriffe werden nur lokal gegen Dateinamen und kleine Inhalte im Mod-Archiv
+geprueft. Es wird kein Code ausgefuehrt.
+#>
+function Get-BypassInjectionPatterns {
+    return @(
+        "javaagent",
+        "-javaagent",
+        "premain",
+        "agentmain",
+        "instrumentation",
+        "classfiletransformer",
+        "mixintransformer",
+        "launchwrapper",
+        "bytebuddy",
+        "asm.tree",
+        "dllinject",
+        "injector",
+        "bypass",
+        "anticheat",
+        "eac",
+        "vanguard"
+    )
+}
+
+<#
+Funktion: Scan-ModBypassInjection
+
+Diese Funktion sucht in einem Mod-Archiv nach Hinweisen auf Agenten,
+Injection, Bytecode-Transformation oder Bypass-Begriffe.
+Das ist eine statische Read-only-Pruefung.
+#>
+function Scan-ModBypassInjection {
+    param (
+        [Parameter(Mandatory = $true)]
+        [object]$ModFile
+    )
+
+    $findings = New-Object System.Collections.Generic.List[object]
+    $patterns = Get-BypassInjectionPatterns
+    $archive = $null
+
+    try {
+        $archive = [System.IO.Compression.ZipFile]::OpenRead($ModFile.FullName)
+
+        foreach ($entry in $archive.Entries) {
+            $entryName = $entry.FullName.ToLowerInvariant()
+
+            foreach ($pattern in $patterns) {
+                if ($entryName.Contains($pattern.ToLowerInvariant())) {
+                    $findings.Add([PSCustomObject]@{
+                        ModFile = $ModFile.Name
+                        ModPath = $ModFile.FullName
+                        Pattern = $pattern
+                        Where = ("Archiv-Pfad: {0}" -f $entry.FullName)
+                    })
+                }
+            }
+
+            if (Test-EntryShouldBeRead -Entry $entry) {
+                $entryText = Read-ArchiveEntryAsText -Entry $entry
+                $lowerText = $entryText.ToLowerInvariant()
+
+                foreach ($pattern in $patterns) {
+                    if ($lowerText.Contains($pattern.ToLowerInvariant())) {
+                        $findings.Add([PSCustomObject]@{
+                            ModFile = $ModFile.Name
+                            ModPath = $ModFile.FullName
+                            Pattern = $pattern
+                            Where = ("Inhalt: {0}" -f $entry.FullName)
+                        })
+                    }
+                }
+            }
+        }
+    }
+    catch {
+        return @()
+    }
+    finally {
+        if ($null -ne $archive) {
+            $archive.Dispose()
+        }
+    }
+
+    return [object[]]$findings.ToArray()
+}
+
+<#
+Funktion: Scan-JvmAgents
+
+Diese Funktion liest laufende Java-Prozesse aus und sucht in der Kommandozeile
+nach Agent- oder Injection-Hinweisen wie -javaagent.
+Sie beendet keine Prozesse und startet nichts.
+#>
+function Scan-JvmAgents {
+    $issues = New-Object System.Collections.Generic.List[object]
+
+    try {
+        $javaProcesses = @(Get-CimInstance Win32_Process -Filter "name = 'javaw.exe' or name = 'java.exe'" -ErrorAction SilentlyContinue)
+
+        foreach ($process in $javaProcesses) {
+            $commandLine = [string]$process.CommandLine
+            $lowerCommandLine = $commandLine.ToLowerInvariant()
+
+            foreach ($pattern in @(Get-BypassInjectionPatterns)) {
+                if ($lowerCommandLine.Contains($pattern.ToLowerInvariant())) {
+                    $issues.Add([PSCustomObject]@{
+                        ProcessId = $process.ProcessId
+                        ProcessName = $process.Name
+                        Pattern = $pattern
+                    })
+                }
+            }
+        }
+    }
+    catch {
+        return @()
+    }
+
+    return [object[]]$issues.ToArray()
+}
+
+<#
 Funktion: Test-EntryShouldBeRead
 
 Diese Funktion entscheidet, ob eine Datei innerhalb einer Mod gelesen werden soll.
@@ -580,20 +706,45 @@ function Start-ModScan {
 
     $allFindings = New-Object System.Collections.Generic.List[object]
     $obfuscatedMods = New-Object System.Collections.Generic.List[object]
+    $bypassFindings = New-Object System.Collections.Generic.List[object]
     $patterns = Get-SuspiciousPatterns
     # Das @(...)-Konstrukt sorgt dafuer, dass auch genau eine gefundene Mod
     # als Liste behandelt wird. Dadurch funktioniert $mods.Count immer.
     $mods = @(Get-ModFiles -FolderPath $FolderPath)
 
+    Write-Host ""
+    Write-Host ("Found {0} JAR files to analyze" -f $mods.Count) -ForegroundColor Cyan
+    Write-Host ""
+
+    $iconSearch = [char]::ConvertFromUtf32(0x1F50D)
+    $iconMicroscope = [char]::ConvertFromUtf32(0x1F52C)
+    $iconShield = [char]::ConvertFromUtf32(0x1F6E1)
+    $iconMagnifier = [char]::ConvertFromUtf32(0x1F50E)
+    $iconZap = [char]::ConvertFromUtf32(0x26A1)
+
+    Write-Host ("{0} Pass 1 - Hash verification (offline; Modrinth + Megabase disabled)..." -f $iconSearch) -ForegroundColor Cyan
     foreach ($mod in $mods) {
         # Der Hash wird nur lokal berechnet. Er wird nicht hochgeladen und nicht
         # mit Online-Datenbanken verglichen.
         $null = Get-FileHash -LiteralPath $mod.FullName -Algorithm SHA1 -ErrorAction SilentlyContinue
+    }
 
+    Write-Host ("{0} Pass 2 - Deep-scanning all {1} mods..." -f $iconMicroscope, $mods.Count) -ForegroundColor Cyan
+    foreach ($mod in $mods) {
         foreach ($finding in @(Scan-ModArchive -ModFile $mod -Patterns $patterns)) {
             $allFindings.Add($finding)
         }
+    }
 
+    Write-Host ("{0} Pass 3 - Bypass/injection scan on all {1} mods..." -f $iconShield, $mods.Count) -ForegroundColor Cyan
+    foreach ($mod in $mods) {
+        foreach ($finding in @(Scan-ModBypassInjection -ModFile $mod)) {
+            $bypassFindings.Add($finding)
+        }
+    }
+
+    Write-Host ("{0} Pass 4 - Obfuscation analysis on all {1} mods..." -f $iconMagnifier, $mods.Count) -ForegroundColor Cyan
+    foreach ($mod in $mods) {
         $obfuscation = Scan-ModObfuscation -ModFile $mod
 
         if ($null -ne $obfuscation) {
@@ -601,14 +752,22 @@ function Start-ModScan {
         }
     }
 
+    Write-Host ("{0} Pass 5 - Scanning JVM for agents and injections..." -f $iconZap) -ForegroundColor Cyan
+    $jvmIssues = @(Scan-JvmAgents)
+
+    if ($jvmIssues.Count -eq 0) {
+        Write-Host "   OK  JVM looks clean" -ForegroundColor Green
+    }
+
     return [PSCustomObject]@{
         ModCount = $mods.Count
         Mods = [object[]]$mods
         Findings = [object[]]$allFindings.ToArray()
         ObfuscatedMods = [object[]]$obfuscatedMods.ToArray()
+        BypassFindings = [object[]]$bypassFindings.ToArray()
+        JvmIssues = [object[]]$jvmIssues
     }
 }
-
 <#
 Funktion: Show-ScanResults
 
@@ -628,7 +787,13 @@ function Show-ScanResults {
         [object[]]$Findings = @(),
 
         [AllowEmptyCollection()]
-        [object[]]$ObfuscatedMods = @()
+        [object[]]$ObfuscatedMods = @(),
+
+        [AllowEmptyCollection()]
+        [object[]]$BypassFindings = @(),
+
+        [AllowEmptyCollection()]
+        [object[]]$JvmIssues = @()
     )
 
     if ($null -eq $Findings) {
@@ -639,8 +804,17 @@ function Show-ScanResults {
         $ObfuscatedMods = @()
     }
 
+    if ($null -eq $BypassFindings) {
+        $BypassFindings = @()
+    }
+
+    if ($null -eq $JvmIssues) {
+        $JvmIssues = @()
+    }
+
     $findingCount = $Findings.Count
     $suspiciousPaths = @($Findings | Select-Object -ExpandProperty ModPath -Unique)
+    $bypassPaths = @($BypassFindings | Select-Object -ExpandProperty ModPath -Unique)
     $unknownMods = @($Mods | Where-Object { $suspiciousPaths -notcontains $_.FullName })
 
     Write-Host ""
@@ -702,6 +876,30 @@ function Show-ScanResults {
     }
 
     Write-Host ""
+    Write-Host ("  *  BYPASS / INJECTION  ({0})" -f $bypassPaths.Count) -ForegroundColor Yellow
+    Write-Line
+
+    if ($BypassFindings.Count -eq 0) {
+        Write-Host "  None" -ForegroundColor DarkGray
+    }
+    else {
+        foreach ($group in @($BypassFindings | Group-Object -Property ModPath)) {
+            $firstFinding = $group.Group[0]
+            Write-Host ""
+            Write-Host ("  INJECTED?  {0}" -f $firstFinding.ModFile) -ForegroundColor Yellow
+            Write-Host ("  Path:      {0}" -f $firstFinding.ModPath) -ForegroundColor DarkGray
+            Write-Host ""
+            Write-Host "  PATTERNS" -ForegroundColor Yellow
+
+            foreach ($finding in @($group.Group | Sort-Object Pattern -Unique)) {
+                Write-Host ("    {0}" -f $finding.Pattern) -ForegroundColor White
+            }
+
+            Write-Line
+        }
+    }
+
+    Write-Host ""
     Write-Host ("  *  OBFUSCATED MODS  ({0})" -f $ObfuscatedMods.Count) -ForegroundColor Magenta
     Write-Line
 
@@ -721,20 +919,34 @@ function Show-ScanResults {
     }
 
     Write-Host ""
+    Write-Host ("  *  JVM ISSUES  ({0})" -f $JvmIssues.Count) -ForegroundColor Yellow
+    Write-Line
+
+    if ($JvmIssues.Count -eq 0) {
+        Write-Host "  None" -ForegroundColor DarkGray
+    }
+    else {
+        foreach ($issue in $JvmIssues) {
+            Write-Host ("  JVM FLAG   {0} PID {1}" -f $issue.ProcessName, $issue.ProcessId) -ForegroundColor Yellow
+            Write-Host ("    Pattern: {0}" -f $issue.Pattern) -ForegroundColor White
+        }
+    }
+
+    Write-Host ""
     Write-Host "SUMMARY" -ForegroundColor Cyan
     Write-Line
     Write-Host ("  Total files scanned: {0}" -f $ModCount) -ForegroundColor White
     Write-Host ("  Verified mods:       0") -ForegroundColor White
     Write-Host ("  Unknown mods:        {0}" -f $unknownMods.Count) -ForegroundColor White
     Write-Host ("  Suspicious mods:     {0}" -f $suspiciousPaths.Count) -ForegroundColor White
-    Write-Host ("  Bypass/Injected:     0") -ForegroundColor White
+    Write-Host ("  Bypass/Injected:     {0}" -f $bypassPaths.Count) -ForegroundColor White
     Write-Host ("  Obfuscated mods:     {0}" -f $ObfuscatedMods.Count) -ForegroundColor White
-    Write-Host ("  JVM issues:          0") -ForegroundColor White
+    Write-Host ("  JVM issues:          {0}" -f $JvmIssues.Count) -ForegroundColor White
     Write-Host ("  Network used:        0") -ForegroundColor White
     Write-Host ("  Files changed:       0") -ForegroundColor White
     Write-Line
 
-    if ($findingCount -eq 0 -and $ObfuscatedMods.Count -eq 0) {
+    if ($findingCount -eq 0 -and $ObfuscatedMods.Count -eq 0 -and $BypassFindings.Count -eq 0 -and $JvmIssues.Count -eq 0) {
         Write-Host "Analysis complete. No suspicious hints found." -ForegroundColor Green
     }
     else {
@@ -784,17 +996,8 @@ function Start-OpenModScanner {
 
     $scanResult = Start-ModScan -FolderPath $folderPath
 
-    Write-Host ""
-    Write-Host ("Found {0} JAR files to analyze" -f $scanResult.ModCount) -ForegroundColor Cyan
-    Write-Host ""
-    Write-Host "Pass 1 - Hash calculation (offline only)..." -ForegroundColor Cyan
-    Write-Host "Pass 2 - Deep-scanning mod archives..." -ForegroundColor Cyan
-    Write-Host "Pass 3 - Bypass/injection pattern scan..." -ForegroundColor Cyan
-    Write-Host "Pass 4 - Obfuscation analysis..." -ForegroundColor Cyan
-    Write-Host "Pass 5 - JVM process overview..." -ForegroundColor Cyan
-    Write-Host "   OK  JVM overview complete" -ForegroundColor Green
-
-    Show-ScanResults -ModCount $scanResult.ModCount -Mods $scanResult.Mods -Findings $scanResult.Findings -ObfuscatedMods $scanResult.ObfuscatedMods
+    Show-ScanResults -ModCount $scanResult.ModCount -Mods $scanResult.Mods -Findings $scanResult.Findings -ObfuscatedMods $scanResult.ObfuscatedMods -BypassFindings $scanResult.BypassFindings -JvmIssues $scanResult.JvmIssues
 }
 
 Start-OpenModScanner
+
