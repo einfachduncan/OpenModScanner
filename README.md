@@ -202,6 +202,10 @@ Findet alle Mod-Dateien, startet die Passes und sammelt Verified-, Flagged-, Rev
 
 Zeigt zuerst eine Haupt-Mod-Uebersicht, die `! FLAGGED`, `✓ VERIFIED`, `? REVIEW` und `✓ CLEAN` getrennt gruppiert. Danach zeigt es nur relevante Detailbereiche.
 
+### `Show-ClosingCredits`
+
+Zeigt am Ende einen Abschlussbereich mit Projektname, Ersteller und GitHub-Link. Diese Funktion ist rein optisch.
+
 ### `Start-OpenModScanner`
 
 Ist der Hauptablauf des Skripts. Diese Funktion startet die Anzeige, laedt die ZIP-Unterstuetzung, fragt Ordner und Online-Modus ab, startet den Scan und zeigt die Ergebnisse.

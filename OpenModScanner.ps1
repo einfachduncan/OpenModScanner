@@ -918,6 +918,29 @@ function Clear-SpinnerStatus {
 }
 
 <#
+Funktion: Show-ClosingCredits
+
+Diese Funktion zeigt den Abschlussbereich nach dem Scan an.
+Der Bereich ist rein optisch. Er speichert nichts, liest keine Dateien und
+stellt keine Netzwerkverbindung her.
+#>
+function Show-ClosingCredits {
+    $sparkles = [char]::ConvertFromUtf32(0x2728)
+    $person = [char]::ConvertFromUtf32(0x1F464)
+    $star = [char]::ConvertFromUtf32(0x1F31F)
+    $phone = [char]::ConvertFromUtf32(0x1F4F1)
+    $link = [char]::ConvertFromUtf32(0x1F517)
+
+    Write-Host ""
+    Write-Host ("  {0} Analysis complete! Thanks for using OpenModScanner" -f $sparkles) -ForegroundColor Cyan
+    Write-Host ""
+    Write-Host ("  {0} Created by: {1} einfachduncan" -f $person, $star) -ForegroundColor White
+    Write-Host ("  {0} Project:    {1} GitHub   : https://github.com/einfachduncan/OpenModScanner" -f $phone, $link) -ForegroundColor DarkGray
+    Write-Host ""
+    Write-Host ("-" * 71) -ForegroundColor DarkCyan
+}
+
+<#
 Funktion: Start-ModScan
 
 Diese Funktion startet den eigentlichen Scan.
@@ -1292,6 +1315,8 @@ function Show-ScanResults {
     else {
         Write-Host "Analysis complete. Review flagged mods before launching Minecraft." -ForegroundColor Yellow
     }
+
+    Show-ClosingCredits
 }
 
 <#
