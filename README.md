@@ -2,7 +2,7 @@
 
 OpenModScanner ist ein vollstaendig quelloffener Minecraft-Mod-Scanner als einzelnes PowerShell-Skript.
 
-Das Skript scannt einen vom Benutzer angegebenen Mods-Ordner. Es listet die sichtbaren Haupt-Mod-Dateien aus diesem Ordner in einer Tabelle und oeffnet diese `.jar`- und `.zip`-Mods read-only als Archiv. Geflaggt werden nur Cheat-/Hack-/Injection-/Obfuscation-Hinweise, nicht normale Mods nur weil sie unbekannt sind.
+Das Skript scannt einen vom Benutzer angegebenen Mods-Ordner. Es listet die sichtbaren Haupt-Mod-Dateien aus diesem Ordner in einer Tabelle und oeffnet diese `.jar`- und `.zip`-Mods read-only als Archiv. Geflaggt werden nur konkrete Cheat-/Hack-/Injection-Hinweise, nicht normale Mods nur weil sie unbekannt sind oder normale Fabric-Technik verwenden.
 
 OpenModScanner veraendert keine Dateien, loescht nichts, entpackt nichts dauerhaft, sendet keine Daten ins Internet und benoetigt keine Administratorrechte.
 
@@ -67,6 +67,7 @@ Found 42 JAR files to analyze
   OK   STATUS     MOD FILE
   ✓    CLEAN      example.jar
   !    FLAGGED    cheat-client.jar
+  ?    REVIEW     packed-mod.jar
 
   *  SUSPICIOUS MODS  (0)
   None
@@ -159,7 +160,7 @@ Findet alle Mod-Dateien und scannt sie einzeln. Die Funktion sammelt alle Treffe
 
 ### `Show-ScanResults`
 
-Zeigt zuerst eine Haupt-Mod-Tabelle mit `✓ CLEAN` oder `! FLAGGED`. Danach werden nur geflaggte Mods mit Details angezeigt.
+Zeigt zuerst eine Haupt-Mod-Tabelle mit `✓ CLEAN`, `! FLAGGED` oder `? REVIEW`. `FLAGGED` wird fuer konkrete Cheat-/Hack-/Injection-Hinweise genutzt. `REVIEW` ist nur ein Hinweis fuer sehr starke Obfuscation und bedeutet nicht automatisch Cheat.
 
 ### `Start-OpenModScanner`
 

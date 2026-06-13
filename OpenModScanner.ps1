@@ -417,8 +417,9 @@ Funktion: Scan-ModObfuscation
 
 Diese Funktion untersucht nur die Namen von .class-Dateien innerhalb einer Mod.
 Sie liest keine Dateien ausfuehrend und entpackt nichts dauerhaft.
-Wenn viele Klassennamen zufaellig wirken, wird die Mod als moeglich obfuscated
-angezeigt.
+Wenn sehr viele Klassennamen zufaellig wirken, wird die Mod als moeglich
+obfuscated angezeigt. Die Grenze ist absichtlich streng, damit normale
+Performance- und Library-Mods nicht zu schnell als auffaellig erscheinen.
 #>
 function Scan-ModObfuscation {
     param (
@@ -439,7 +440,7 @@ function Scan-ModObfuscation {
         $gibberishEntries = @($classEntries | Where-Object { Test-GibberishClassName -ClassName $_.FullName })
         $percent = [math]::Round(($gibberishEntries.Count / [double]$classEntries.Count) * 100)
 
-        if ($gibberishEntries.Count -ge 4 -and $percent -ge 8) {
+        if ($gibberishEntries.Count -ge 20 -and $percent -ge 35) {
             return [PSCustomObject]@{
                 ModFile = $ModFile.Name
                 ModPath = $ModFile.FullName
@@ -465,9 +466,10 @@ function Scan-ModObfuscation {
 <#
 Funktion: Get-BypassInjectionPatterns
 
-Diese Funktion liefert Suchbegriffe fuer Bypass-, Agent- und Injection-Hinweise.
-Die Begriffe werden nur lokal gegen Dateinamen und kleine Inhalte im Mod-Archiv
-geprueft. Es wird kein Code ausgefuehrt.
+Diese Funktion liefert Suchbegriffe fuer klare Bypass-, Agent- und
+Injection-Hinweise. Normale Minecraft-Mod-Technik wie Mixins, ASM oder
+Launchwrapper steht hier bewusst nicht drin, weil besonders Fabric-Mods diese
+Begriffe oft ganz harmlos verwenden.
 #>
 function Get-BypassInjectionPatterns {
     return @(
@@ -475,18 +477,14 @@ function Get-BypassInjectionPatterns {
         "-javaagent",
         "premain",
         "agentmain",
-        "instrumentation",
-        "classfiletransformer",
-        "mixintransformer",
-        "launchwrapper",
-        "bytebuddy",
-        "asm.tree",
         "dllinject",
-        "injector",
-        "bypass",
-        "anticheat",
-        "eac",
-        "vanguard"
+        "dll injection",
+        "native injector",
+        "anticheatbypass",
+        "anti-cheat bypass",
+        "grimbypass",
+        "vulcanbypass",
+        "matrixbypass"
     )
 }
 
@@ -851,9 +849,11 @@ function Show-ScanResults {
     $suspiciousPaths = @($Findings | Select-Object -ExpandProperty ModPath -Unique)
     $bypassPaths = @($BypassFindings | Select-Object -ExpandProperty ModPath -Unique)
     $obfuscatedPaths = @($ObfuscatedMods | Select-Object -ExpandProperty ModPath -Unique)
-    $flaggedPaths = @($suspiciousPaths + $bypassPaths + $obfuscatedPaths | Select-Object -Unique)
+    $flaggedPaths = @($suspiciousPaths + $bypassPaths | Select-Object -Unique)
+    $reviewPaths = @($obfuscatedPaths | Where-Object { $flaggedPaths -notcontains $_ } | Select-Object -Unique)
     $okMark = [char]::ConvertFromUtf32(0x2713)
     $warnMark = "!"
+    $reviewMark = "?"
 
     Write-Host ""
     Write-Host ("  *  MAIN MODS  ({0})" -f $Mods.Count) -ForegroundColor Cyan
@@ -869,6 +869,9 @@ function Show-ScanResults {
         foreach ($mod in @($Mods | Sort-Object Name)) {
             if ($flaggedPaths -contains $mod.FullName) {
                 Write-Host ("  {0,-4} {1,-10} {2}" -f $warnMark, "FLAGGED", $mod.Name) -ForegroundColor Red
+            }
+            elseif ($reviewPaths -contains $mod.FullName) {
+                Write-Host ("  {0,-4} {1,-10} {2}" -f $reviewMark, "REVIEW", $mod.Name) -ForegroundColor Yellow
             }
             else {
                 Write-Host ("  {0,-4} {1,-10} {2}" -f $okMark, "CLEAN", $mod.Name) -ForegroundColor Green
@@ -981,7 +984,7 @@ function Show-ScanResults {
     Write-Line
     Write-Host ("  Total files scanned: {0}" -f $ModCount) -ForegroundColor White
     Write-Host ("  Verified mods:       0") -ForegroundColor White
-    Write-Host ("  Clean mods:          {0}" -f ($Mods.Count - $flaggedPaths.Count)) -ForegroundColor White
+    Write-Host ("  Clean mods:          {0}" -f ($Mods.Count - $flaggedPaths.Count - $reviewPaths.Count)) -ForegroundColor White
     Write-Host ("  Suspicious mods:     {0}" -f $suspiciousPaths.Count) -ForegroundColor White
     Write-Host ("  Bypass/Injected:     {0}" -f $bypassPaths.Count) -ForegroundColor White
     Write-Host ("  Obfuscated mods:     {0}" -f $ObfuscatedMods.Count) -ForegroundColor White
