@@ -358,7 +358,7 @@ Funktion: Start-ModScan
 
 Diese Funktion startet den eigentlichen Scan.
 Sie laedt die Suchmuster, findet Mod-Dateien und scannt jede Mod einzeln.
-Sie gibt eine komplette Trefferliste zurueck.
+Sie gibt eine Zusammenfassung mit Mod-Anzahl und Trefferliste zurueck.
 #>
 function Start-ModScan {
     param (
@@ -372,32 +372,33 @@ function Start-ModScan {
     # als Liste behandelt wird. Dadurch funktioniert $mods.Count immer.
     $mods = @(Get-ModFiles -FolderPath $FolderPath)
 
-    Write-Info ("Gefundene Mod-Dateien: {0}" -f $mods.Count)
-
     if ($mods.Count -eq 0) {
         Write-WarningMessage "Keine .jar- oder .zip-Mod-Dateien gefunden. Bitte pruefe, ob wirklich der mods-Ordner des richtigen Profils ausgewaehlt wurde."
     }
 
     foreach ($mod in $mods) {
-        Write-Host ("Pruefe: {0}" -f $mod.Name) -ForegroundColor DarkGray
-
         foreach ($finding in @(Scan-ModArchive -ModFile $mod -Patterns $patterns)) {
             $allFindings.Add($finding)
         }
     }
 
-    return $allFindings
+    return [PSCustomObject]@{
+        ModCount = $mods.Count
+        Findings = [object[]]$allFindings.ToArray()
+    }
 }
 
 <#
 Funktion: Show-ScanResults
 
-Diese Funktion zeigt das Ergebnis sauber an.
-Wenn es keine Treffer gibt, wird eine klare Entwarnung angezeigt.
-Wenn es Treffer gibt, werden Mod-Datei, Pfad, Fundstelle, Muster, Risiko und Grund angezeigt.
+Diese Funktion zeigt das Ergebnis bewusst kurz und uebersichtlich an.
+Treffer werden pro Mod gruppiert, damit die Ausgabe nicht unnoetig lang wird.
 #>
 function Show-ScanResults {
     param (
+        [Parameter(Mandatory = $true)]
+        [int]$ModCount,
+
         [AllowEmptyCollection()]
         [object[]]$Findings = @()
     )
@@ -406,25 +407,39 @@ function Show-ScanResults {
         $Findings = @()
     }
 
+    $findingCount = $Findings.Count
+
+    Write-Host "[3/3] Ergebnis anzeigen..." -ForegroundColor Cyan
+    Write-Host ""
+    Write-Host ("Gefundene Mods:        {0}" -f $ModCount) -ForegroundColor White
+    Write-Host ("Verdaechtige Treffer:  {0}" -f $findingCount) -ForegroundColor White
     Write-Host ""
 
-    if ($Findings.Count -eq 0) {
-        Write-Host "Keine verdaechtigen Hinweise gefunden." -ForegroundColor Green
+    if ($findingCount -eq 0) {
+        Write-Host "Status: Keine verdaechtigen Hinweise gefunden." -ForegroundColor Green
         return
     }
 
-    Write-Host ("Verdaechtige Hinweise gefunden: {0}" -f $Findings.Count) -ForegroundColor Red
+    Write-Host "WARNUNG: Verdaechtige Hinweise gefunden" -ForegroundColor Red
     Write-Host ""
 
-    foreach ($finding in $Findings) {
-        Write-Host ("Risiko:   {0}" -f $finding.Level) -ForegroundColor Yellow
-        Write-Host ("Mod:      {0}" -f $finding.ModFile) -ForegroundColor White
-        Write-Host ("Pfad:     {0}" -f $finding.ModPath) -ForegroundColor White
-        Write-Host ("Stelle:   {0}" -f $finding.Where) -ForegroundColor White
-        Write-Host ("Muster:   {0}" -f $finding.Pattern) -ForegroundColor White
-        Write-Host ("Grund:    {0}" -f $finding.Reason) -ForegroundColor White
+    $groupedFindings = $Findings | Group-Object -Property ModPath
+
+    foreach ($group in $groupedFindings) {
+        $firstFinding = $group.Group[0]
+        Write-Host ("Mod: {0}" -f $firstFinding.ModFile) -ForegroundColor White
+        Write-Host ("Pfad: {0}" -f $firstFinding.ModPath) -ForegroundColor DarkGray
+
+        foreach ($finding in $group.Group) {
+            Write-Host ("  - [{0}] {1}" -f $finding.Level, $finding.Pattern) -ForegroundColor Yellow
+            Write-Host ("    Wo: {0}" -f $finding.Where) -ForegroundColor Gray
+            Write-Host ("    Grund: {0}" -f $finding.Reason) -ForegroundColor Gray
+        }
+
         Write-Host ""
     }
+
+    Write-Host "Empfehlung: Starte auffaellige Mods nicht, bevor du sie manuell geprueft hast." -ForegroundColor Yellow
 }
 
 <#
@@ -442,8 +457,10 @@ Es gibt keine Netzwerkverbindung, keine Datei-Aenderung, keine Registry-Aenderun
 keine Autostarts und keine Hintergrundprozesse.
 #>
 function Start-OpenModScanner {
-    Write-Info "OpenModScanner - quelloffener Minecraft-Mod-Scanner"
-    Write-Info "Read-only: liest Mods, entpackt nichts dauerhaft und veraendert keine Dateien."
+    Write-Host "OpenModScanner" -ForegroundColor Cyan
+    Write-Host "Minecraft Mod Security Scanner" -ForegroundColor White
+    Write-Host ""
+    Write-Host "[1/3] Mods-Ordner pruefen..." -ForegroundColor Cyan
     Write-Host ""
 
     try {
@@ -461,8 +478,11 @@ function Start-OpenModScanner {
         return
     }
 
-    $findings = @(Start-ModScan -FolderPath $folderPath)
-    Show-ScanResults -Findings $findings
+    Write-Host ""
+    Write-Host "[2/3] Mods scannen..." -ForegroundColor Cyan
+    $scanResult = Start-ModScan -FolderPath $folderPath
+
+    Show-ScanResults -ModCount $scanResult.ModCount -Findings $scanResult.Findings
 }
 
 Start-OpenModScanner

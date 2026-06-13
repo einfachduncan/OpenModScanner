@@ -40,6 +40,38 @@ Hinweis: Der obige Startbefehl laedt das Skript von GitHub. Das Skript selbst en
 
 Ein Treffer ist kein Beweis fuer Schadsoftware. Ein Treffer bedeutet: Diese Mod sollte genauer geprueft werden.
 
+## Beispiel-Ausgabe
+
+Ohne Treffer:
+
+```text
+OpenModScanner
+Minecraft Mod Security Scanner
+
+[1/3] Mods-Ordner pruefen...
+[2/3] Mods scannen...
+[3/3] Ergebnis anzeigen...
+
+Gefundene Mods:        42
+Verdaechtige Treffer:  0
+
+Status: Keine verdaechtigen Hinweise gefunden.
+```
+
+Mit Treffern:
+
+```text
+WARNUNG: Verdaechtige Hinweise gefunden
+
+Mod: example.jar
+Pfad: C:\Minecraft\mods\example.jar
+  - [Hoch] discord.com/api/webhooks
+    Wo: Inhalt: fabric.mod.json
+    Grund: Discord-Webhooks werden oft fuer Datenabfluss missbraucht.
+
+Empfehlung: Starte auffaellige Mods nicht, bevor du sie manuell geprueft hast.
+```
+
 ## Erklaerung aller Funktionen
 
 ### `Write-Info`
@@ -92,7 +124,7 @@ Findet alle Mod-Dateien und scannt sie einzeln. Die Funktion sammelt alle Treffe
 
 ### `Show-ScanResults`
 
-Zeigt die Ergebnisse an. Ohne Treffer wird eine gruene Entwarnung angezeigt. Mit Treffern werden Risiko, Mod, Pfad, Fundstelle, Muster und Grund angezeigt.
+Zeigt die Ergebnisse kurz und uebersichtlich an. Ohne Treffer wird eine klare Entwarnung angezeigt. Mit Treffern werden die Hinweise pro Mod gruppiert.
 
 ### `Start-OpenModScanner`
 
