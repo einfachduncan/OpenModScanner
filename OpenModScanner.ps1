@@ -338,6 +338,19 @@ function Get-SuspiciousPatterns {
         [PSCustomObject]@{ Pattern = "meteorclient"; Level = "Mittel"; Section = "STRINGS"; Reason = "Kann auf einen bekannten Utility-/Cheat-Client hinweisen." },
         [PSCustomObject]@{ Pattern = "meteor-client"; Level = "Mittel"; Section = "STRINGS"; Reason = "Kann auf Meteor-Client-Code oder Addons hinweisen." },
         [PSCustomObject]@{ Pattern = "meteordevelopment"; Level = "Mittel"; Section = "STRINGS"; Reason = "Kann auf Meteor-Client-Code oder Addons hinweisen." },
+        [PSCustomObject]@{ Pattern = "meteordevelopment.meteorclient"; Level = "Mittel"; Section = "STRINGS"; Reason = "Kann auf Meteor-Client-Code hinweisen." },
+        [PSCustomObject]@{ Pattern = "meteordevelopment/meteorclient"; Level = "Mittel"; Section = "STRINGS"; Reason = "Kann auf Meteor-Client-Code hinweisen." },
+        [PSCustomObject]@{ Pattern = "wurstclient"; Level = "Mittel"; Section = "STRINGS"; Reason = "Kann auf Wurst-Client-Code hinweisen." },
+        [PSCustomObject]@{ Pattern = "wurst-client"; Level = "Mittel"; Section = "STRINGS"; Reason = "Kann auf Wurst-Client-Code hinweisen." },
+        [PSCustomObject]@{ Pattern = "net.wurstclient"; Level = "Mittel"; Section = "STRINGS"; Reason = "Kann auf Wurst-Client-Code hinweisen." },
+        [PSCustomObject]@{ Pattern = "net/wurstclient"; Level = "Mittel"; Section = "STRINGS"; Reason = "Kann auf Wurst-Client-Code hinweisen." },
+        [PSCustomObject]@{ Pattern = "wurstplus"; Level = "Mittel"; Section = "STRINGS"; Reason = "Kann auf Wurst-Plus-Client-Code hinweisen." },
+        [PSCustomObject]@{ Pattern = "wurst+"; Level = "Mittel"; Section = "STRINGS"; Reason = "Kann auf Wurst-Plus-Client-Code hinweisen." },
+        [PSCustomObject]@{ Pattern = "dev.krypton"; Level = "Mittel"; Section = "STRINGS"; Reason = "Kann auf Krypton-/Crypton-Client-Code hinweisen." },
+        [PSCustomObject]@{ Pattern = "kryptonclient"; Level = "Mittel"; Section = "STRINGS"; Reason = "Kann auf Krypton-Client-Code hinweisen." },
+        [PSCustomObject]@{ Pattern = "krypton-client"; Level = "Mittel"; Section = "STRINGS"; Reason = "Kann auf Krypton-Client-Code hinweisen." },
+        [PSCustomObject]@{ Pattern = "cryptonclient"; Level = "Mittel"; Section = "STRINGS"; Reason = "Kann auf Crypton-Client-Code hinweisen." },
+        [PSCustomObject]@{ Pattern = "crypton-client"; Level = "Mittel"; Section = "STRINGS"; Reason = "Kann auf Crypton-Client-Code hinweisen." },
         [PSCustomObject]@{ Pattern = "liquidbounce"; Level = "Mittel"; Section = "STRINGS"; Reason = "Kann auf einen bekannten Utility-/Cheat-Client hinweisen." },
         [PSCustomObject]@{ Pattern = "rusherhack"; Level = "Mittel"; Section = "STRINGS"; Reason = "Kann auf einen bekannten Utility-/Cheat-Client hinweisen." },
         [PSCustomObject]@{ Pattern = "vapeclient"; Level = "Mittel"; Section = "STRINGS"; Reason = "Kann auf einen bekannten Utility-/Cheat-Client hinweisen." },
@@ -844,7 +857,8 @@ function Scan-ModArchive {
         }
     }
     catch {
-        $findings.Add((New-Finding -ModFile $ModFile.Name -ModPath $ModFile.FullName -Where "Archiv kann nicht gelesen werden" -Pattern "Lesefehler" -Level "Info" -Reason "Die Datei ist keine lesbare JAR/ZIP-Datei oder ist beschaedigt."))
+        # Ein Lesefehler allein soll keine Mod als Cheat markieren. Bereits
+        # vorher gefundene Dateinamen-Signaturen bleiben aber erhalten.
     }
     finally {
         if ($null -ne $archive) {
