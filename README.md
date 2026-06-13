@@ -64,10 +64,18 @@ Pass 5 - Scanning JVM for agents and injections...
 
   *  MAIN MODS  (42)
   OK   STATUS     MOD FILE
-  ✓    VERIFIED   sodium.jar
-  ✓    CLEAN      example.jar
+
+  FLAGGED  (1)
   !    FLAGGED    cheat-client.jar
+
+  VERIFIED (1)
+  ✓    VERIFIED   sodium.jar
+
+  REVIEW   (1)
   ?    REVIEW     packed-mod.jar
+
+  CLEAN    (39)
+  ✓    CLEAN      example.jar
 
   *  VERIFIED MODS  (1)
   [ OK ] sodium.jar
@@ -192,7 +200,7 @@ Findet alle Mod-Dateien, startet die Passes und sammelt Verified-, Flagged-, Rev
 
 ### `Show-ScanResults`
 
-Zeigt zuerst eine Haupt-Mod-Tabelle mit `✓ VERIFIED`, `✓ CLEAN`, `! FLAGGED` oder `? REVIEW`. Danach zeigt es nur relevante Detailbereiche.
+Zeigt zuerst eine Haupt-Mod-Uebersicht, die `! FLAGGED`, `✓ VERIFIED`, `? REVIEW` und `✓ CLEAN` getrennt gruppiert. Danach zeigt es nur relevante Detailbereiche.
 
 ### `Start-OpenModScanner`
 

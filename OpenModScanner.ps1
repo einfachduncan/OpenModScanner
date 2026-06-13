@@ -873,6 +873,51 @@ function Scan-ModArchive {
 }
 
 <#
+Funktion: Write-SpinnerStatus
+
+Diese Funktion zeigt eine einzeilige Lade-Anzeige an.
+Sie ueberschreibt immer dieselbe Konsolenzeile. Dadurch sieht der Benutzer,
+dass der Scanner arbeitet, ohne dass fuer jede einzelne Mod viele neue Zeilen
+ausgegeben werden.
+#>
+function Write-SpinnerStatus {
+    param (
+        [Parameter(Mandatory = $true)]
+        [string]$Activity,
+
+        [Parameter(Mandatory = $true)]
+        [int]$Index,
+
+        [Parameter(Mandatory = $true)]
+        [int]$Total,
+
+        [Parameter(Mandatory = $true)]
+        [string]$Name
+    )
+
+    $frames = @("|", "/", "-", "\")
+    $frame = $frames[$Index % $frames.Count]
+    $shortName = $Name
+
+    if ($shortName.Length -gt 46) {
+        $shortName = $shortName.Substring(0, 43) + "..."
+    }
+
+    Write-Host ("`r   [{0}] {1}: {2}/{3} - {4}        " -f $frame, $Activity, $Index, $Total, $shortName) -NoNewline -ForegroundColor DarkGray
+}
+
+<#
+Funktion: Clear-SpinnerStatus
+
+Diese Funktion raeumt die Lade-Anzeige nach einem Pass auf.
+Sie schreibt Leerzeichen ueber die aktuelle Zeile und springt danach in eine
+neue Zeile, damit die naechste Ausgabe sauber beginnt.
+#>
+function Clear-SpinnerStatus {
+    Write-Host ("`r" + (" " * 100) + "`r") -NoNewline
+}
+
+<#
 Funktion: Start-ModScan
 
 Diese Funktion startet den eigentlichen Scan.
@@ -914,39 +959,57 @@ function Start-ModScan {
         Write-Host ("{0} Pass 1 - Hash verification (offline; Modrinth + Megabase disabled)..." -f $iconSearch) -ForegroundColor Cyan
     }
 
+    $index = 0
     foreach ($mod in $mods) {
+        $index++
+        Write-SpinnerStatus -Activity "Hash verify" -Index $index -Total $mods.Count -Name $mod.Name
         $verification = Get-ModVerification -ModFile $mod -UseOnlineVerification $UseOnlineVerification
 
         if ($null -ne $verification) {
             $verifiedMods.Add($verification)
         }
     }
+    Clear-SpinnerStatus
 
     Write-Host ("{0} Pass 2 - Deep-scanning all {1} mods..." -f $iconMicroscope, $mods.Count) -ForegroundColor Cyan
+    $index = 0
     foreach ($mod in $mods) {
+        $index++
+        Write-SpinnerStatus -Activity "Deep scan" -Index $index -Total $mods.Count -Name $mod.Name
         foreach ($finding in @(Scan-ModArchive -ModFile $mod -Patterns $patterns)) {
             $allFindings.Add($finding)
         }
     }
+    Clear-SpinnerStatus
 
     Write-Host ("{0} Pass 3 - Bypass/injection scan on all {1} mods..." -f $iconShield, $mods.Count) -ForegroundColor Cyan
+    $index = 0
     foreach ($mod in $mods) {
+        $index++
+        Write-SpinnerStatus -Activity "Injection scan" -Index $index -Total $mods.Count -Name $mod.Name
         foreach ($finding in @(Scan-ModBypassInjection -ModFile $mod)) {
             $bypassFindings.Add($finding)
         }
     }
+    Clear-SpinnerStatus
 
     Write-Host ("{0} Pass 4 - Obfuscation analysis on all {1} mods..." -f $iconMagnifier, $mods.Count) -ForegroundColor Cyan
+    $index = 0
     foreach ($mod in $mods) {
+        $index++
+        Write-SpinnerStatus -Activity "Obfuscation" -Index $index -Total $mods.Count -Name $mod.Name
         $obfuscation = Scan-ModObfuscation -ModFile $mod
 
         if ($null -ne $obfuscation) {
             $obfuscatedMods.Add($obfuscation)
         }
     }
+    Clear-SpinnerStatus
 
     Write-Host ("{0} Pass 5 - Scanning JVM for agents and injections..." -f $iconZap) -ForegroundColor Cyan
+    Write-SpinnerStatus -Activity "JVM scan" -Index 1 -Total 1 -Name "java/javaw processes"
     $jvmIssues = @(Scan-JvmAgents)
+    Clear-SpinnerStatus
 
     if ($jvmIssues.Count -eq 0) {
         Write-Host "   OK  JVM looks clean" -ForegroundColor Green
@@ -1028,6 +1091,10 @@ function Show-ScanResults {
     $okMark = [char]::ConvertFromUtf32(0x2713)
     $warnMark = "!"
     $reviewMark = "?"
+    $flaggedMods = @($Mods | Where-Object { $flaggedPaths -contains $_.FullName } | Sort-Object Name)
+    $verifiedCleanMods = @($Mods | Where-Object { ($verifiedPaths -contains $_.FullName) -and ($flaggedPaths -notcontains $_.FullName) } | Sort-Object Name)
+    $reviewMods = @($Mods | Where-Object { ($reviewPaths -contains $_.FullName) -and ($flaggedPaths -notcontains $_.FullName) -and ($verifiedPaths -notcontains $_.FullName) } | Sort-Object Name)
+    $cleanMods = @($Mods | Where-Object { ($flaggedPaths -notcontains $_.FullName) -and ($verifiedPaths -notcontains $_.FullName) -and ($reviewPaths -notcontains $_.FullName) } | Sort-Object Name)
 
     Write-Host ""
     Write-Host ("  *  MAIN MODS  ({0})" -f $Mods.Count) -ForegroundColor Cyan
@@ -1040,17 +1107,45 @@ function Show-ScanResults {
         Write-Host ("  {0,-4} {1,-10} {2}" -f "OK", "STATUS", "MOD FILE") -ForegroundColor DarkGray
         Write-Line
 
-        foreach ($mod in @($Mods | Sort-Object Name)) {
-            if ($flaggedPaths -contains $mod.FullName) {
+        Write-Host ("  FLAGGED  ({0})" -f $flaggedMods.Count) -ForegroundColor Red
+        if ($flaggedMods.Count -eq 0) {
+            Write-Host "    None" -ForegroundColor DarkGray
+        }
+        else {
+            foreach ($mod in $flaggedMods) {
                 Write-Host ("  {0,-4} {1,-10} {2}" -f $warnMark, "FLAGGED", $mod.Name) -ForegroundColor Red
             }
-            elseif ($verifiedPaths -contains $mod.FullName) {
+        }
+
+        Write-Host ""
+        Write-Host ("  VERIFIED ({0})" -f $verifiedCleanMods.Count) -ForegroundColor Green
+        if ($verifiedCleanMods.Count -eq 0) {
+            Write-Host "    None" -ForegroundColor DarkGray
+        }
+        else {
+            foreach ($mod in $verifiedCleanMods) {
                 Write-Host ("  {0,-4} {1,-10} {2}" -f $okMark, "VERIFIED", $mod.Name) -ForegroundColor Green
             }
-            elseif ($reviewPaths -contains $mod.FullName) {
+        }
+
+        Write-Host ""
+        Write-Host ("  REVIEW   ({0})" -f $reviewMods.Count) -ForegroundColor Yellow
+        if ($reviewMods.Count -eq 0) {
+            Write-Host "    None" -ForegroundColor DarkGray
+        }
+        else {
+            foreach ($mod in $reviewMods) {
                 Write-Host ("  {0,-4} {1,-10} {2}" -f $reviewMark, "REVIEW", $mod.Name) -ForegroundColor Yellow
             }
-            else {
+        }
+
+        Write-Host ""
+        Write-Host ("  CLEAN    ({0})" -f $cleanMods.Count) -ForegroundColor Green
+        if ($cleanMods.Count -eq 0) {
+            Write-Host "    None" -ForegroundColor DarkGray
+        }
+        else {
+            foreach ($mod in $cleanMods) {
                 Write-Host ("  {0,-4} {1,-10} {2}" -f $okMark, "CLEAN", $mod.Name) -ForegroundColor Green
             }
         }
@@ -1181,7 +1276,7 @@ function Show-ScanResults {
     Write-Line
     Write-Host ("  Total files scanned: {0}" -f $ModCount) -ForegroundColor White
     Write-Host ("  Verified mods:       {0}" -f $VerifiedMods.Count) -ForegroundColor White
-    Write-Host ("  Clean mods:          {0}" -f ($Mods.Count - $flaggedPaths.Count - $reviewPaths.Count)) -ForegroundColor White
+    Write-Host ("  Clean mods:          {0}" -f $cleanMods.Count) -ForegroundColor White
     Write-Host ("  Suspicious mods:     {0}" -f $suspiciousPaths.Count) -ForegroundColor White
     Write-Host ("  Bypass/Injected:     {0}" -f $bypassPaths.Count) -ForegroundColor White
     Write-Host ("  Obfuscated mods:     {0}" -f $ObfuscatedMods.Count) -ForegroundColor White
