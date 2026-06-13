@@ -66,15 +66,22 @@ Der Banner ist rein optisch und fuehrt keine Systemaktionen aus.
 #>
 function Show-Banner {
     Write-Host ""
-    Write-Host "   ____                  __  __           _ ____" -ForegroundColor Cyan
-    Write-Host "  / __ \____  ___  ____ |  \/  | ___   __| / ___|  ___ __ _ _ __  _ __   ___ _ __" -ForegroundColor Cyan
-    Write-Host " | |  | | '_ \/ _ \/ __|| |\/| |/ _ \ / _` \___ \ / __/ _` | '_ \| '_ \ / _ \ '__|" -ForegroundColor Cyan
-    Write-Host " | |__| | |_) |  __/\__ \| |  | | (_) | (_| |___) | (_| (_| | | | | | | |  __/ |" -ForegroundColor Cyan
-    Write-Host "  \____/| .__/ \___||___/|_|  |_|\___/ \__,_|____/ \___\__,_|_| |_|_| |_|\___|_|" -ForegroundColor Cyan
-    Write-Host "        |_|" -ForegroundColor Cyan
+    Write-Host "██╗    ██╗ █████╗ ██╗  ██╗███████╗██████╗ " -ForegroundColor Cyan
+    Write-Host "██║    ██║██╔══██╗╚██╗██╔╝██╔════╝██╔══██╗" -ForegroundColor Cyan
+    Write-Host "██║ █╗ ██║███████║ ╚███╔╝ █████╗  ██║  ██║" -ForegroundColor Cyan
+    Write-Host "██║███╗██║██╔══██║ ██╔██╗ ██╔══╝  ██║  ██║" -ForegroundColor Cyan
+    Write-Host "╚███╔███╔╝██║  ██║██╔╝ ██╗███████╗██████╔╝" -ForegroundColor Cyan
+    Write-Host " ╚══╝╚══╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝╚═════╝ " -ForegroundColor Cyan
     Write-Host ""
-    Write-Host "                 OpenModScanner - Minecraft Mod Security Scanner" -ForegroundColor White
-    Write-Host "                      Made for local, read-only mod checks" -ForegroundColor DarkGray
+    Write-Host "███╗   ███╗ ██████╗ ██████╗      █████╗ ███╗   ██╗ █████╗ ██╗  ██╗   ██╗████████╗███████╗██████╗ " -ForegroundColor Cyan
+    Write-Host "████╗ ████║██╔═══██╗██╔══██╗    ██╔══██╗████╗  ██║██╔══██╗██║  ╚██╗ ██╔╝╚══██╔══╝██╔════╝██╔══██╗" -ForegroundColor Cyan
+    Write-Host "██╔████╔██║██║   ██║██║  ██║    ███████║██╔██╗ ██║███████║██║   ╚████╔╝    ██║   █████╗  ██████╔╝" -ForegroundColor Cyan
+    Write-Host "██║╚██╔╝██║██║   ██║██║  ██║    ██╔══██║██║╚██╗██║██╔══██║██║    ╚██╔╝     ██║   ██╔══╝  ██╔══██╗" -ForegroundColor Cyan
+    Write-Host "██║ ╚═╝ ██║╚██████╔╝██████╔╝    ██║  ██║██║ ╚████║██║  ██║███████╗██║      ██║   ███████╗██║  ██║" -ForegroundColor Cyan
+    Write-Host "╚═╝     ╚═╝ ╚═════╝ ╚═════╝     ╚═╝  ╚═╝╚═╝  ╚═══╝╚═╝  ╚═╝╚══════╝╚═╝      ╚═╝   ╚══════╝╚═╝  ╚═╝" -ForegroundColor Cyan
+    Write-Host ""
+    Write-Host "                 WaxedMod Analyzer - Minecraft Mod Security Scanner" -ForegroundColor White
+    Write-Host "                              Made by Waxed" -ForegroundColor DarkGray
     Write-Host ""
     Write-Line
     Write-Host ""
