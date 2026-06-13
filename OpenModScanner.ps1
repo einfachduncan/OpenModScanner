@@ -147,44 +147,77 @@ Ein Treffer ist kein Beweis fuer Schadsoftware. Er ist nur ein Hinweis.
 #>
 function Get-SuspiciousPatterns {
     return @(
-        [PSCustomObject]@{ Pattern = "token"; Level = "Mittel"; Section = "STRINGS"; Reason = "Kann auf Token-Diebstahl oder Authentifizierungsdaten hinweisen." },
-        [PSCustomObject]@{ Pattern = "grabber"; Level = "Hoch"; Section = "STRINGS"; Reason = "Wird haeufig fuer Diebstahl-Werkzeuge verwendet." },
-        [PSCustomObject]@{ Pattern = "stealer"; Level = "Hoch"; Section = "STRINGS"; Reason = "Wird haeufig fuer Datendiebstahl verwendet." },
-        [PSCustomObject]@{ Pattern = "keylogger"; Level = "Hoch"; Section = "STRINGS"; Reason = "Kann auf Tastatur-Aufzeichnung hinweisen." },
-        [PSCustomObject]@{ Pattern = "webhook"; Level = "Mittel"; Section = "STRINGS"; Reason = "Kann auf externe Meldungen an Chat- oder Webdienste hinweisen." },
-        [PSCustomObject]@{ Pattern = "discord.com/api/webhooks"; Level = "Hoch"; Section = "STRINGS"; Reason = "Discord-Webhooks werden oft fuer Datenabfluss missbraucht." },
-        [PSCustomObject]@{ Pattern = "payload"; Level = "Mittel"; Section = "STRINGS"; Reason = "Kann auf nachgeladenen oder versteckten Schadcode hinweisen." },
-        [PSCustomObject]@{ Pattern = "backdoor"; Level = "Hoch"; Section = "STRINGS"; Reason = "Kann auf eine Hintertuer hinweisen." },
-        [PSCustomObject]@{ Pattern = "rat"; Level = "Mittel"; Section = "STRINGS"; Reason = "Kann fuer Remote-Access-Tool stehen." },
-        [PSCustomObject]@{ Pattern = "miner"; Level = "Mittel"; Section = "STRINGS"; Reason = "Kann auf Krypto-Mining hinweisen." },
-        [PSCustomObject]@{ Pattern = "crypto"; Level = "Niedrig"; Section = "STRINGS"; Reason = "Kann harmlos sein, sollte aber im Mod-Kontext geprueft werden." },
-        [PSCustomObject]@{ Pattern = "exfil"; Level = "Hoch"; Section = "STRINGS"; Reason = "Abkuerzung fuer Datenabfluss." },
-        [PSCustomObject]@{ Pattern = "credential"; Level = "Mittel"; Section = "STRINGS"; Reason = "Kann auf Zugangsdaten hinweisen." },
-        [PSCustomObject]@{ Pattern = "password"; Level = "Mittel"; Section = "STRINGS"; Reason = "Kann auf Passwort-Bezug hinweisen." },
-        [PSCustomObject]@{ Pattern = "session"; Level = "Niedrig"; Section = "STRINGS"; Reason = "Kann in Mods harmlos sein, ist aber fuer Kontodaten relevant." },
-        [PSCustomObject]@{ Pattern = "cookie"; Level = "Mittel"; Section = "STRINGS"; Reason = "Kann auf Browser- oder Sitzungsdaten hinweisen." },
-        [PSCustomObject]@{ Pattern = "java.net.url"; Level = "Mittel"; Section = "PATTERNS"; Reason = "Kann auf Netzwerkzugriffe im Mod-Code hinweisen." },
-        [PSCustomObject]@{ Pattern = "urlclassloader"; Level = "Hoch"; Section = "PATTERNS"; Reason = "Kann auf dynamisches Nachladen von Code hinweisen." },
-        [PSCustomObject]@{ Pattern = "runtime.getruntime"; Level = "Hoch"; Section = "PATTERNS"; Reason = "Kann auf das Starten externer Programme hinweisen." },
-        [PSCustomObject]@{ Pattern = "processbuilder"; Level = "Hoch"; Section = "PATTERNS"; Reason = "Kann auf das Starten externer Programme hinweisen." },
-        [PSCustomObject]@{ Pattern = "cmd.exe"; Level = "Hoch"; Section = "PATTERNS"; Reason = "Kann auf Windows-Kommandoausfuehrung hinweisen." },
-        [PSCustomObject]@{ Pattern = "powershell"; Level = "Hoch"; Section = "PATTERNS"; Reason = "Kann auf PowerShell-Ausfuehrung durch eine Mod hinweisen." },
         [PSCustomObject]@{ Pattern = "killaura"; Level = "Mittel"; Section = "PATTERNS"; Reason = "Kann auf Cheat- oder PvP-Client-Funktionen hinweisen." },
+        [PSCustomObject]@{ Pattern = "clickaura"; Level = "Mittel"; Section = "PATTERNS"; Reason = "Kann auf Cheat- oder PvP-Client-Funktionen hinweisen." },
+        [PSCustomObject]@{ Pattern = "multiaura"; Level = "Mittel"; Section = "PATTERNS"; Reason = "Kann auf Cheat- oder PvP-Client-Funktionen hinweisen." },
+        [PSCustomObject]@{ Pattern = "forcefield"; Level = "Mittel"; Section = "PATTERNS"; Reason = "Kann auf Aura-/Auto-Angriff-Funktionen hinweisen." },
         [PSCustomObject]@{ Pattern = "crystalaura"; Level = "Mittel"; Section = "PATTERNS"; Reason = "Kann auf Cheat- oder PvP-Client-Funktionen hinweisen." },
+        [PSCustomObject]@{ Pattern = "autocrystal"; Level = "Mittel"; Section = "PATTERNS"; Reason = "Kann auf automatische Crystal-PvP-Funktionen hinweisen." },
+        [PSCustomObject]@{ Pattern = "autoanchor"; Level = "Mittel"; Section = "PATTERNS"; Reason = "Kann auf automatische Anchor-PvP-Funktionen hinweisen." },
+        [PSCustomObject]@{ Pattern = "anchoraura"; Level = "Mittel"; Section = "PATTERNS"; Reason = "Kann auf automatische Anchor-PvP-Funktionen hinweisen." },
+        [PSCustomObject]@{ Pattern = "bedaura"; Level = "Mittel"; Section = "PATTERNS"; Reason = "Kann auf automatische Bed-PvP-Funktionen hinweisen." },
         [PSCustomObject]@{ Pattern = "autoclicker"; Level = "Mittel"; Section = "PATTERNS"; Reason = "Kann auf automatisierte Klickfunktionen hinweisen." },
+        [PSCustomObject]@{ Pattern = "triggerbot"; Level = "Mittel"; Section = "PATTERNS"; Reason = "Kann auf automatische Angriffsausloesung hinweisen." },
+        [PSCustomObject]@{ Pattern = "aimassist"; Level = "Mittel"; Section = "PATTERNS"; Reason = "Kann auf Aim-Assist-Funktionen hinweisen." },
+        [PSCustomObject]@{ Pattern = "aimbot"; Level = "Mittel"; Section = "PATTERNS"; Reason = "Kann auf Aim-Bot-Funktionen hinweisen." },
+        [PSCustomObject]@{ Pattern = "silentaim"; Level = "Mittel"; Section = "PATTERNS"; Reason = "Kann auf stille Zielhilfe hinweisen." },
+        [PSCustomObject]@{ Pattern = "bowaimbot"; Level = "Mittel"; Section = "PATTERNS"; Reason = "Kann auf Aim-Bot-Funktionen hinweisen." },
+        [PSCustomObject]@{ Pattern = "autototem"; Level = "Mittel"; Section = "PATTERNS"; Reason = "Kann auf automatische Totem-Funktionen hinweisen." },
+        [PSCustomObject]@{ Pattern = "inventorytotem"; Level = "Mittel"; Section = "PATTERNS"; Reason = "Kann auf automatische Totem-Funktionen hinweisen." },
+        [PSCustomObject]@{ Pattern = "hover totem"; Level = "Mittel"; Section = "PATTERNS"; Reason = "Kann auf automatische Totem-Funktionen hinweisen." },
+        [PSCustomObject]@{ Pattern = "autopot"; Level = "Mittel"; Section = "PATTERNS"; Reason = "Kann auf automatische Potion-Funktionen hinweisen." },
+        [PSCustomObject]@{ Pattern = "autoarmor"; Level = "Mittel"; Section = "PATTERNS"; Reason = "Kann auf automatische Armor-Funktionen hinweisen." },
+        [PSCustomObject]@{ Pattern = "autoeat"; Level = "Mittel"; Section = "PATTERNS"; Reason = "Kann auf automatische Ess-Funktionen hinweisen." },
+        [PSCustomObject]@{ Pattern = "auto weapon"; Level = "Mittel"; Section = "PATTERNS"; Reason = "Kann auf automatische Waffenwahl hinweisen." },
+        [PSCustomObject]@{ Pattern = "autoweapon"; Level = "Mittel"; Section = "PATTERNS"; Reason = "Kann auf automatische Waffenwahl hinweisen." },
+        [PSCustomObject]@{ Pattern = "shieldbreaker"; Level = "Mittel"; Section = "PATTERNS"; Reason = "Kann auf Schild-Breaker-Funktionen hinweisen." },
+        [PSCustomObject]@{ Pattern = "shielddisabler"; Level = "Mittel"; Section = "PATTERNS"; Reason = "Kann auf Schild-Disabler-Funktionen hinweisen." },
         [PSCustomObject]@{ Pattern = "xray"; Level = "Mittel"; Section = "PATTERNS"; Reason = "Kann auf unfairen Sicht-/Suchvorteil hinweisen." },
         [PSCustomObject]@{ Pattern = "wallhack"; Level = "Mittel"; Section = "PATTERNS"; Reason = "Kann auf unfairen Sichtvorteil hinweisen." },
+        [PSCustomObject]@{ Pattern = "blockesp"; Level = "Mittel"; Section = "PATTERNS"; Reason = "Kann auf ESP-/Anzeige-Funktionen hinweisen." },
+        [PSCustomObject]@{ Pattern = "storageesp"; Level = "Mittel"; Section = "PATTERNS"; Reason = "Kann auf ESP-/Anzeige-Funktionen hinweisen." },
+        [PSCustomObject]@{ Pattern = "chestesp"; Level = "Mittel"; Section = "PATTERNS"; Reason = "Kann auf ESP-/Anzeige-Funktionen hinweisen." },
+        [PSCustomObject]@{ Pattern = "playeresp"; Level = "Mittel"; Section = "PATTERNS"; Reason = "Kann auf ESP-/Anzeige-Funktionen hinweisen." },
+        [PSCustomObject]@{ Pattern = "itemesp"; Level = "Mittel"; Section = "PATTERNS"; Reason = "Kann auf ESP-/Anzeige-Funktionen hinweisen." },
+        [PSCustomObject]@{ Pattern = "tracers"; Level = "Mittel"; Section = "PATTERNS"; Reason = "Kann auf Spieler-/Entity-Tracking hinweisen." },
+        [PSCustomObject]@{ Pattern = "nuker"; Level = "Mittel"; Section = "PATTERNS"; Reason = "Kann auf automatische Blockzerstoerung hinweisen." },
+        [PSCustomObject]@{ Pattern = "scaffold"; Level = "Mittel"; Section = "PATTERNS"; Reason = "Kann auf automatische Bau-Funktionen hinweisen." },
+        [PSCustomObject]@{ Pattern = "airplace"; Level = "Mittel"; Section = "PATTERNS"; Reason = "Kann auf unfaire Platzierungs-Funktionen hinweisen." },
+        [PSCustomObject]@{ Pattern = "ghosthand"; Level = "Mittel"; Section = "PATTERNS"; Reason = "Kann auf unfaire Interaktions-Funktionen hinweisen." },
+        [PSCustomObject]@{ Pattern = "nofall"; Level = "Mittel"; Section = "PATTERNS"; Reason = "Kann auf No-Fall-Funktionen hinweisen." },
+        [PSCustomObject]@{ Pattern = "noslow"; Level = "Mittel"; Section = "PATTERNS"; Reason = "Kann auf No-Slow-Funktionen hinweisen." },
+        [PSCustomObject]@{ Pattern = "antiknockback"; Level = "Mittel"; Section = "PATTERNS"; Reason = "Kann auf Anti-Knockback-Funktionen hinweisen." },
+        [PSCustomObject]@{ Pattern = "velocityspoof"; Level = "Mittel"; Section = "PATTERNS"; Reason = "Kann auf Velocity-/Knockback-Spoofing hinweisen." },
+        [PSCustomObject]@{ Pattern = "timerhack"; Level = "Mittel"; Section = "PATTERNS"; Reason = "Kann auf Timer-/Speed-Manipulation hinweisen." },
+        [PSCustomObject]@{ Pattern = "packetfly"; Level = "Mittel"; Section = "PATTERNS"; Reason = "Kann auf Bewegungs-Cheats hinweisen." },
+        [PSCustomObject]@{ Pattern = "elytraspeed"; Level = "Mittel"; Section = "PATTERNS"; Reason = "Kann auf Elytra-Speed-Funktionen hinweisen." },
+        [PSCustomObject]@{ Pattern = "cheststealer"; Level = "Mittel"; Section = "PATTERNS"; Reason = "Kann auf automatische Inventar-Funktionen hinweisen." },
+        [PSCustomObject]@{ Pattern = "invmanager"; Level = "Mittel"; Section = "PATTERNS"; Reason = "Kann auf automatische Inventar-Funktionen hinweisen." },
+        [PSCustomObject]@{ Pattern = "fakelag"; Level = "Mittel"; Section = "PATTERNS"; Reason = "Kann auf Netzwerk-/Lag-Manipulation hinweisen." },
+        [PSCustomObject]@{ Pattern = "pingspoof"; Level = "Mittel"; Section = "PATTERNS"; Reason = "Kann auf Ping-Spoofing hinweisen." },
+        [PSCustomObject]@{ Pattern = "packetcancel"; Level = "Mittel"; Section = "PATTERNS"; Reason = "Kann auf Packet-Manipulation hinweisen." },
+        [PSCustomObject]@{ Pattern = "packetmine"; Level = "Mittel"; Section = "PATTERNS"; Reason = "Kann auf Packet-Mining-Funktionen hinweisen." },
+        [PSCustomObject]@{ Pattern = "grimbypass"; Level = "Mittel"; Section = "PATTERNS"; Reason = "Kann auf Anti-Cheat-Bypass hinweisen." },
+        [PSCustomObject]@{ Pattern = "vulcanbypass"; Level = "Mittel"; Section = "PATTERNS"; Reason = "Kann auf Anti-Cheat-Bypass hinweisen." },
+        [PSCustomObject]@{ Pattern = "matrixbypass"; Level = "Mittel"; Section = "PATTERNS"; Reason = "Kann auf Anti-Cheat-Bypass hinweisen." },
+        [PSCustomObject]@{ Pattern = "seedcracker"; Level = "Mittel"; Section = "STRINGS"; Reason = "Kann auf Seed-Rekonstruktionswerkzeuge hinweisen." },
+        [PSCustomObject]@{ Pattern = "orefinder"; Level = "Mittel"; Section = "STRINGS"; Reason = "Kann auf Erzsuch-Funktionen hinweisen." },
+        [PSCustomObject]@{ Pattern = "stashfinder"; Level = "Mittel"; Section = "STRINGS"; Reason = "Kann auf Such-/Finder-Funktionen hinweisen." },
         [PSCustomObject]@{ Pattern = "meteorclient"; Level = "Mittel"; Section = "STRINGS"; Reason = "Kann auf einen bekannten Utility-/Cheat-Client hinweisen." },
         [PSCustomObject]@{ Pattern = "meteor-client"; Level = "Mittel"; Section = "STRINGS"; Reason = "Kann auf Meteor-Client-Code oder Addons hinweisen." },
         [PSCustomObject]@{ Pattern = "meteordevelopment"; Level = "Mittel"; Section = "STRINGS"; Reason = "Kann auf Meteor-Client-Code oder Addons hinweisen." },
-        [PSCustomObject]@{ Pattern = "aimassist"; Level = "Mittel"; Section = "PATTERNS"; Reason = "Kann auf Aim-Assist-Funktionen hinweisen." },
-        [PSCustomObject]@{ Pattern = "autototem"; Level = "Mittel"; Section = "PATTERNS"; Reason = "Kann auf automatische Totem-Funktionen hinweisen." },
-        [PSCustomObject]@{ Pattern = "blockesp"; Level = "Mittel"; Section = "PATTERNS"; Reason = "Kann auf ESP-/Anzeige-Funktionen hinweisen." },
-        [PSCustomObject]@{ Pattern = "storageesp"; Level = "Mittel"; Section = "PATTERNS"; Reason = "Kann auf ESP-/Anzeige-Funktionen hinweisen." },
-        [PSCustomObject]@{ Pattern = "tracers"; Level = "Mittel"; Section = "PATTERNS"; Reason = "Kann auf Spieler-/Entity-Tracking hinweisen." },
-        [PSCustomObject]@{ Pattern = "nuker"; Level = "Mittel"; Section = "PATTERNS"; Reason = "Kann auf automatische Blockzerstoerung hinweisen." },
-        [PSCustomObject]@{ Pattern = "seedcracker"; Level = "Mittel"; Section = "STRINGS"; Reason = "Kann auf Seed-Rekonstruktionswerkzeuge hinweisen." },
-        [PSCustomObject]@{ Pattern = "orefinder"; Level = "Mittel"; Section = "STRINGS"; Reason = "Kann auf Erzsuch-Funktionen hinweisen." }
+        [PSCustomObject]@{ Pattern = "liquidbounce"; Level = "Mittel"; Section = "STRINGS"; Reason = "Kann auf einen bekannten Utility-/Cheat-Client hinweisen." },
+        [PSCustomObject]@{ Pattern = "rusherhack"; Level = "Mittel"; Section = "STRINGS"; Reason = "Kann auf einen bekannten Utility-/Cheat-Client hinweisen." },
+        [PSCustomObject]@{ Pattern = "vapeclient"; Level = "Mittel"; Section = "STRINGS"; Reason = "Kann auf einen bekannten Utility-/Cheat-Client hinweisen." },
+        [PSCustomObject]@{ Pattern = "futureclient"; Level = "Mittel"; Section = "STRINGS"; Reason = "Kann auf einen bekannten Utility-/Cheat-Client hinweisen." },
+        [PSCustomObject]@{ Pattern = "impactclient"; Level = "Mittel"; Section = "STRINGS"; Reason = "Kann auf einen bekannten Utility-/Cheat-Client hinweisen." },
+        [PSCustomObject]@{ Pattern = "aristois"; Level = "Mittel"; Section = "STRINGS"; Reason = "Kann auf einen bekannten Utility-/Cheat-Client hinweisen." },
+        [PSCustomObject]@{ Pattern = "sessionstealer"; Level = "Hoch"; Section = "STRINGS"; Reason = "Kann auf Account-/Session-Diebstahl hinweisen." },
+        [PSCustomObject]@{ Pattern = "tokengrabber"; Level = "Hoch"; Section = "STRINGS"; Reason = "Kann auf Token-Diebstahl hinweisen." },
+        [PSCustomObject]@{ Pattern = "tokenlogger"; Level = "Hoch"; Section = "STRINGS"; Reason = "Kann auf Token-Logging hinweisen." },
+        [PSCustomObject]@{ Pattern = "keylogger"; Level = "Hoch"; Section = "STRINGS"; Reason = "Kann auf Tastatur-Aufzeichnung hinweisen." },
+        [PSCustomObject]@{ Pattern = "backdoor"; Level = "Hoch"; Section = "STRINGS"; Reason = "Kann auf eine Hintertuer hinweisen." },
+        [PSCustomObject]@{ Pattern = "reverseshell"; Level = "Hoch"; Section = "STRINGS"; Reason = "Kann auf Remote-Zugriff hinweisen." }
     )
 }
 
@@ -294,7 +327,8 @@ Funktion: Get-ModFiles
 
 Diese Funktion sucht im angegebenen Ordner nach Mod-Dateien.
 Minecraft-Mods sind meistens .jar-Dateien. .jar-Dateien sind technisch ZIP-Archive.
-Die Funktion listet nur Dateien auf und veraendert nichts.
+Die Funktion listet nur die Hauptdateien direkt im angegebenen Mods-Ordner auf
+und veraendert nichts.
 Auch deaktivierte Mod-Dateien wie name.jar.disabled werden erkannt, weil sie
 technisch weiterhin JAR-Dateien sein koennen.
 #>
@@ -305,7 +339,7 @@ function Get-ModFiles {
     )
 
     $scanErrors = @()
-    $allFiles = @(Get-ChildItem -LiteralPath $FolderPath -File -Recurse -ErrorAction SilentlyContinue -ErrorVariable scanErrors)
+    $allFiles = @(Get-ChildItem -LiteralPath $FolderPath -File -ErrorAction SilentlyContinue -ErrorVariable scanErrors)
 
     foreach ($scanError in $scanErrors) {
         Write-WarningMessage ("Konnte einen Pfad nicht lesen: {0}" -f $scanError.Exception.Message)
@@ -771,9 +805,10 @@ function Start-ModScan {
 <#
 Funktion: Show-ScanResults
 
-Diese Funktion zeigt nur das Wesentliche an.
-Wenn nichts gefunden wird, zeigt sie nur eine kurze Entwarnung.
-Wenn etwas gefunden wird, zeigt sie nur die geflaggten Mods.
+Diese Funktion zeigt zuerst eine Haupt-Mod-Tabelle.
+Alle sichtbaren Haupt-Mod-Dateien aus dem Ordner werden mit Status angezeigt.
+Nur Mods mit Cheat-, Injection-, Obfuscation- oder JVM-Hinweisen werden danach
+als geflaggt ausgegeben.
 #>
 function Show-ScanResults {
     param (
@@ -815,20 +850,29 @@ function Show-ScanResults {
     $findingCount = $Findings.Count
     $suspiciousPaths = @($Findings | Select-Object -ExpandProperty ModPath -Unique)
     $bypassPaths = @($BypassFindings | Select-Object -ExpandProperty ModPath -Unique)
-    $unknownMods = @($Mods | Where-Object { $suspiciousPaths -notcontains $_.FullName })
+    $obfuscatedPaths = @($ObfuscatedMods | Select-Object -ExpandProperty ModPath -Unique)
+    $flaggedPaths = @($suspiciousPaths + $bypassPaths + $obfuscatedPaths | Select-Object -Unique)
+    $okMark = [char]::ConvertFromUtf32(0x2713)
+    $warnMark = "!"
 
     Write-Host ""
-    Write-Host ("  *  UNKNOWN MODS  ({0})" -f $unknownMods.Count) -ForegroundColor Yellow
+    Write-Host ("  *  MAIN MODS  ({0})" -f $Mods.Count) -ForegroundColor Cyan
     Write-Line
 
-    if ($unknownMods.Count -eq 0) {
+    if ($Mods.Count -eq 0) {
         Write-Host "  None" -ForegroundColor DarkGray
     }
     else {
-        foreach ($mod in $unknownMods) {
-            Write-Host ("  [ ? ] {0}" -f $mod.Name) -ForegroundColor White
-            Write-Host "        Source: local file / not verified online" -ForegroundColor DarkGray
-            Write-Host ""
+        Write-Host ("  {0,-4} {1,-10} {2}" -f "OK", "STATUS", "MOD FILE") -ForegroundColor DarkGray
+        Write-Line
+
+        foreach ($mod in @($Mods | Sort-Object Name)) {
+            if ($flaggedPaths -contains $mod.FullName) {
+                Write-Host ("  {0,-4} {1,-10} {2}" -f $warnMark, "FLAGGED", $mod.Name) -ForegroundColor Red
+            }
+            else {
+                Write-Host ("  {0,-4} {1,-10} {2}" -f $okMark, "CLEAN", $mod.Name) -ForegroundColor Green
+            }
         }
     }
 
@@ -937,7 +981,7 @@ function Show-ScanResults {
     Write-Line
     Write-Host ("  Total files scanned: {0}" -f $ModCount) -ForegroundColor White
     Write-Host ("  Verified mods:       0") -ForegroundColor White
-    Write-Host ("  Unknown mods:        {0}" -f $unknownMods.Count) -ForegroundColor White
+    Write-Host ("  Clean mods:          {0}" -f ($Mods.Count - $flaggedPaths.Count)) -ForegroundColor White
     Write-Host ("  Suspicious mods:     {0}" -f $suspiciousPaths.Count) -ForegroundColor White
     Write-Host ("  Bypass/Injected:     {0}" -f $bypassPaths.Count) -ForegroundColor White
     Write-Host ("  Obfuscated mods:     {0}" -f $ObfuscatedMods.Count) -ForegroundColor White

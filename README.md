@@ -2,7 +2,7 @@
 
 OpenModScanner ist ein vollstaendig quelloffener Minecraft-Mod-Scanner als einzelnes PowerShell-Skript.
 
-Das Skript scannt einen vom Benutzer angegebenen Mods-Ordner. Es sucht nicht nur nach auffaelligen Mod-Dateinamen, sondern oeffnet `.jar`- und `.zip`-Mods read-only als Archiv und prueft auch interne Dateipfade sowie kleine Text-, Metadaten- und `.class`-Dateien auf auffaellige Klartext-Muster.
+Das Skript scannt einen vom Benutzer angegebenen Mods-Ordner. Es listet die sichtbaren Haupt-Mod-Dateien aus diesem Ordner in einer Tabelle und oeffnet diese `.jar`- und `.zip`-Mods read-only als Archiv. Geflaggt werden nur Cheat-/Hack-/Injection-/Obfuscation-Hinweise, nicht normale Mods nur weil sie unbekannt sind.
 
 OpenModScanner veraendert keine Dateien, loescht nichts, entpackt nichts dauerhaft, sendet keine Daten ins Internet und benoetigt keine Administratorrechte.
 
@@ -31,12 +31,13 @@ Hinweis: Der obige Startbefehl laedt das Skript von GitHub. Das Skript selbst en
 
 1. Der Benutzer gibt einen Mods-Ordner ein.
 2. Das Skript prueft, ob dieser Ordner existiert.
-3. Das Skript sucht rekursiv nach `.jar`- und `.zip`-Dateien.
+3. Das Skript sucht direkt im Mods-Ordner nach `.jar`- und `.zip`-Dateien.
 4. Jede gefundene Mod wird read-only als Archiv geoeffnet.
-5. Der Mod-Dateiname wird auf auffaellige Muster geprueft.
-6. Interne Archiv-Pfade werden auf auffaellige Muster geprueft.
-7. Kleine Text-, Metadaten- und `.class`-Dateien im Archiv werden im Arbeitsspeicher gelesen und auf Klartext-Muster geprueft.
-8. Treffer werden mit Risiko, Mod-Datei, Pfad, Fundstelle, Muster und Grund angezeigt.
+5. Der Mod-Dateiname wird auf Cheat-/Hack-Muster geprueft.
+6. Interne Archiv-Pfade werden auf Cheat-/Hack-Muster geprueft.
+7. Kleine Text-, Metadaten- und `.class`-Dateien im Archiv werden im Arbeitsspeicher gelesen und auf Cheat-/Hack-Muster geprueft.
+8. Alle Haupt-Mods werden in einer Tabelle angezeigt.
+9. Nur geflaggte Mods erscheinen in den Detailbereichen.
 
 Ein Treffer ist kein Beweis fuer Schadsoftware. Ein Treffer bedeutet: Diese Mod sollte genauer geprueft werden.
 
@@ -62,9 +63,10 @@ Found 42 JAR files to analyze
 ⚡ Pass 5 - Scanning JVM for agents and injections...
    OK  JVM looks clean
 
-  *  UNKNOWN MODS  (42)
-  [ ? ] example.jar
-        Source: local file / not verified online
+  *  MAIN MODS  (42)
+  OK   STATUS     MOD FILE
+  ✓    CLEAN      example.jar
+  !    FLAGGED    cheat-client.jar
 
   *  SUSPICIOUS MODS  (0)
   None
@@ -78,7 +80,7 @@ Found 42 JAR files to analyze
 SUMMARY
   Total files scanned: 42
   Verified mods:       0
-  Unknown mods:        42
+  Clean mods:          42
   Suspicious mods:     0
   Bypass/Injected:     0
   Obfuscated mods:     0
@@ -125,7 +127,7 @@ Prueft, ob der angegebene Pfad ein vorhandener Ordner ist. Es werden nur Dateisy
 
 ### `Get-SuspiciousPatterns`
 
-Liefert die komplette sichtbare Suchliste. Jedes Muster enthaelt einen Suchtext, eine grobe Risiko-Einschaetzung und eine Erklaerung.
+Liefert die komplette sichtbare Suchliste. Die normale Flagliste ist auf Cheat-, Hack-, Utility-Client- und Account-Diebstahl-Hinweise begrenzt, damit normale Mods nicht nur wegen harmloser technischer Woerter geflaggt werden.
 
 ### `New-Finding`
 
@@ -137,7 +139,7 @@ Prueft einen Text gegen alle Suchmuster. Die Suche ist einfache Klartext-Suche u
 
 ### `Get-ModFiles`
 
-Sucht im angegebenen Ordner rekursiv nach `.jar`- und `.zip`-Dateien. Die Funktion listet nur Dateien auf.
+Sucht direkt im angegebenen Mods-Ordner nach `.jar`- und `.zip`-Dateien. Die Funktion listet nur sichtbare Haupt-Mod-Dateien auf und durchsucht keine Unterordner als eigene Haupt-Mods.
 
 ### `Test-EntryShouldBeRead`
 
@@ -157,7 +159,7 @@ Findet alle Mod-Dateien und scannt sie einzeln. Die Funktion sammelt alle Treffe
 
 ### `Show-ScanResults`
 
-Zeigt die Ergebnisse kurz und uebersichtlich an. Ohne Treffer wird eine klare Entwarnung angezeigt. Mit Treffern werden die Hinweise pro Mod gruppiert.
+Zeigt zuerst eine Haupt-Mod-Tabelle mit `✓ CLEAN` oder `! FLAGGED`. Danach werden nur geflaggte Mods mit Details angezeigt.
 
 ### `Start-OpenModScanner`
 
