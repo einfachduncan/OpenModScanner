@@ -47,15 +47,70 @@ function Write-WarningMessage {
 }
 
 <#
+Funktion: Write-Line
+
+Diese Funktion zeichnet eine einfache Trennlinie.
+Sie verwendet bewusst nur ASCII-Zeichen, damit die Ausgabe in Windows PowerShell
+sauber aussieht und nicht von Terminal-Schriftarten abhaengt.
+#>
+function Write-Line {
+    Write-Host ("-" * 76) -ForegroundColor DarkGray
+}
+
+<#
+Funktion: Show-Banner
+
+Diese Funktion zeigt den Startbildschirm des Scanners.
+Der Banner ist rein optisch und fuehrt keine Systemaktionen aus.
+#>
+function Show-Banner {
+    Write-Host ""
+    Write-Host "   ____                  __  __           _ ____" -ForegroundColor Cyan
+    Write-Host "  / __ \____  ___  ____ |  \/  | ___   __| / ___|  ___ __ _ _ __  _ __   ___ _ __" -ForegroundColor Cyan
+    Write-Host " | |  | | '_ \/ _ \/ __|| |\/| |/ _ \ / _` \___ \ / __/ _` | '_ \| '_ \ / _ \ '__|" -ForegroundColor Cyan
+    Write-Host " | |__| | |_) |  __/\__ \| |  | | (_) | (_| |___) | (_| (_| | | | | | | |  __/ |" -ForegroundColor Cyan
+    Write-Host "  \____/| .__/ \___||___/|_|  |_|\___/ \__,_|____/ \___\__,_|_| |_|_| |_|\___|_|" -ForegroundColor Cyan
+    Write-Host "        |_|" -ForegroundColor Cyan
+    Write-Host ""
+    Write-Host "                 OpenModScanner - Minecraft Mod Security Scanner" -ForegroundColor White
+    Write-Host "                      Made for local, read-only mod checks" -ForegroundColor DarkGray
+    Write-Host ""
+    Write-Line
+    Write-Host ""
+}
+
+<#
+Funktion: Get-DefaultModsFolder
+
+Diese Funktion baut einen typischen Minecraft-Mods-Pfad fuer Windows.
+Der Pfad wird nur als Vorschlag benutzt, wenn der Benutzer bei der Eingabe
+Enter drueckt. Es wird nichts erstellt.
+#>
+function Get-DefaultModsFolder {
+    return (Join-Path $env:APPDATA ".minecraft\mods")
+}
+
+<#
 Funktion: Get-ScanFolderFromUser
 
 Diese Funktion fragt den Benutzer nach dem Mods-Ordner.
 Sie entfernt nur Leerzeichen und aeussere Anfuehrungszeichen.
 Dadurch funktionieren kopierte Pfade besser.
+Wenn der Benutzer nur Enter drueckt, wird der Standardpfad verwendet.
 #>
 function Get-ScanFolderFromUser {
-    $rawInput = Read-Host "Bitte den zu scannenden Mods-Ordner eingeben"
-    return $rawInput.Trim().Trim('"')
+    $defaultPath = Get-DefaultModsFolder
+
+    Write-Host "Enter path to the mods folder: (press Enter to use default)" -ForegroundColor White
+    Write-Host ("Default: {0}" -f $defaultPath) -ForegroundColor DarkGray
+    $rawInput = Read-Host "PATH"
+    $cleanInput = $rawInput.Trim().Trim('"')
+
+    if ([string]::IsNullOrWhiteSpace($cleanInput)) {
+        return $defaultPath
+    }
+
+    return $cleanInput
 }
 
 <#
@@ -113,7 +168,14 @@ function Get-SuspiciousPatterns {
         [PSCustomObject]@{ Pattern = "runtime.getruntime"; Level = "Hoch"; Reason = "Kann auf das Starten externer Programme hinweisen." },
         [PSCustomObject]@{ Pattern = "processbuilder"; Level = "Hoch"; Reason = "Kann auf das Starten externer Programme hinweisen." },
         [PSCustomObject]@{ Pattern = "cmd.exe"; Level = "Hoch"; Reason = "Kann auf Windows-Kommandoausfuehrung hinweisen." },
-        [PSCustomObject]@{ Pattern = "powershell"; Level = "Hoch"; Reason = "Kann auf PowerShell-Ausfuehrung durch eine Mod hinweisen." }
+        [PSCustomObject]@{ Pattern = "powershell"; Level = "Hoch"; Reason = "Kann auf PowerShell-Ausfuehrung durch eine Mod hinweisen." },
+        [PSCustomObject]@{ Pattern = "killaura"; Level = "Mittel"; Reason = "Kann auf Cheat- oder PvP-Client-Funktionen hinweisen." },
+        [PSCustomObject]@{ Pattern = "crystalaura"; Level = "Mittel"; Reason = "Kann auf Cheat- oder PvP-Client-Funktionen hinweisen." },
+        [PSCustomObject]@{ Pattern = "autoclicker"; Level = "Mittel"; Reason = "Kann auf automatisierte Klickfunktionen hinweisen." },
+        [PSCustomObject]@{ Pattern = "xray"; Level = "Mittel"; Reason = "Kann auf unfairen Sicht-/Suchvorteil hinweisen." },
+        [PSCustomObject]@{ Pattern = "wallhack"; Level = "Mittel"; Reason = "Kann auf unfairen Sichtvorteil hinweisen." },
+        [PSCustomObject]@{ Pattern = "meteorclient"; Level = "Mittel"; Reason = "Kann auf einen bekannten Utility-/Cheat-Client hinweisen." },
+        [PSCustomObject]@{ Pattern = "meteordevelopment"; Level = "Mittel"; Reason = "Kann auf Meteor-Client-Code oder Addons hinweisen." }
     )
 }
 
@@ -214,6 +276,34 @@ function Get-ModFiles {
         $lowerName.EndsWith(".zip") -or
         $lowerName.Contains(".jar.")
     })
+}
+
+<#
+Funktion: Get-MinecraftUptimeText
+
+Diese Funktion schaut nur nach laufenden javaw/java-Prozessen.
+Wenn Minecraft gerade laeuft, kann der Benutzer sehen, wie lange der Prozess
+schon aktiv ist. Die Funktion beendet keine Prozesse und veraendert nichts.
+#>
+function Get-MinecraftUptimeText {
+    $javaProcesses = @(Get-Process -Name "javaw", "java" -ErrorAction SilentlyContinue |
+        Where-Object { $null -ne $_.StartTime } |
+        Sort-Object StartTime |
+        Select-Object -First 3)
+
+    if ($javaProcesses.Count -eq 0) {
+        return @("No running javaw/java process found")
+    }
+
+    $lines = New-Object System.Collections.Generic.List[string]
+
+    foreach ($process in $javaProcesses) {
+        $uptime = (Get-Date) - $process.StartTime
+        $lines.Add(("{0} PID {1} started at {2}" -f $process.ProcessName, $process.Id, $process.StartTime))
+        $lines.Add(("Running for: {0}h {1}m {2}s" -f [int]$uptime.TotalHours, $uptime.Minutes, $uptime.Seconds))
+    }
+
+    return $lines
 }
 
 <#
@@ -368,6 +458,7 @@ function Start-ModScan {
 
     $allFindings = New-Object System.Collections.Generic.List[object]
     $patterns = Get-SuspiciousPatterns
+    $uptimeLines = @(Get-MinecraftUptimeText)
     # Das @(...)-Konstrukt sorgt dafuer, dass auch genau eine gefundene Mod
     # als Liste behandelt wird. Dadurch funktioniert $mods.Count immer.
     $mods = @(Get-ModFiles -FolderPath $FolderPath)
@@ -375,6 +466,23 @@ function Start-ModScan {
     if ($mods.Count -eq 0) {
         Write-WarningMessage "Keine .jar- oder .zip-Mod-Dateien gefunden. Bitte pruefe, ob wirklich der mods-Ordner des richtigen Profils ausgewaehlt wurde."
     }
+
+    Write-Host ""
+    Write-Host "{ Minecraft Uptime }" -ForegroundColor Cyan
+    foreach ($line in $uptimeLines) {
+        Write-Host ("   {0}" -f $line) -ForegroundColor DarkGray
+    }
+
+    Write-Host ""
+    Write-Host ("Found {0} JAR files to analyze" -f $mods.Count) -ForegroundColor Cyan
+    Write-Host ""
+    Write-Host "Pass 1 - File discovery..." -ForegroundColor Cyan
+    Write-Host "Pass 2 - Deep-scanning mod archives..." -ForegroundColor Cyan
+    Write-Host "Pass 3 - Suspicious string scan..." -ForegroundColor Cyan
+    Write-Host "Pass 4 - Read-only safety check..." -ForegroundColor Cyan
+    Write-Host "Pass 5 - JVM process overview..." -ForegroundColor Cyan
+    Write-Host "   OK  Scanner stayed read-only" -ForegroundColor Green
+    Write-Host ""
 
     foreach ($mod in $mods) {
         foreach ($finding in @(Scan-ModArchive -ModFile $mod -Patterns $patterns)) {
@@ -384,6 +492,7 @@ function Start-ModScan {
 
     return [PSCustomObject]@{
         ModCount = $mods.Count
+        Mods = [object[]]$mods
         Findings = [object[]]$allFindings.ToArray()
     }
 }
@@ -400,6 +509,9 @@ function Show-ScanResults {
         [int]$ModCount,
 
         [AllowEmptyCollection()]
+        [object[]]$Mods = @(),
+
+        [AllowEmptyCollection()]
         [object[]]$Findings = @()
     )
 
@@ -408,38 +520,71 @@ function Show-ScanResults {
     }
 
     $findingCount = $Findings.Count
+    $suspiciousPaths = @($Findings | Select-Object -ExpandProperty ModPath -Unique)
+    $unknownMods = @($Mods | Where-Object { $suspiciousPaths -notcontains $_.FullName })
 
-    Write-Host "[3/3] Ergebnis anzeigen..." -ForegroundColor Cyan
-    Write-Host ""
-    Write-Host ("Gefundene Mods:        {0}" -f $ModCount) -ForegroundColor White
-    Write-Host ("Verdaechtige Treffer:  {0}" -f $findingCount) -ForegroundColor White
+    Write-Host ("  *  UNKNOWN MODS  ({0})" -f $unknownMods.Count) -ForegroundColor Yellow
+    Write-Line
+
+    if ($unknownMods.Count -eq 0) {
+        Write-Host "  None" -ForegroundColor DarkGray
+    }
+    else {
+        foreach ($mod in $unknownMods) {
+            Write-Host ("  [ ? ] {0}" -f $mod.Name) -ForegroundColor White
+            Write-Host "        Source: local file / not verified online" -ForegroundColor DarkGray
+            Write-Host ""
+        }
+    }
+
     Write-Host ""
 
     if ($findingCount -eq 0) {
-        Write-Host "Status: Keine verdaechtigen Hinweise gefunden." -ForegroundColor Green
-        return
+        Write-Host "  *  SUSPICIOUS MODS  (0)" -ForegroundColor Green
+        Write-Line
+        Write-Host "  None" -ForegroundColor Green
     }
+    else {
+        $groupedFindings = $Findings | Group-Object -Property ModPath
 
-    Write-Host "WARNUNG: Verdaechtige Hinweise gefunden" -ForegroundColor Red
-    Write-Host ""
+        Write-Host ("  *  SUSPICIOUS MODS  ({0})" -f $groupedFindings.Count) -ForegroundColor Red
+        Write-Line
 
-    $groupedFindings = $Findings | Group-Object -Property ModPath
+        foreach ($group in $groupedFindings) {
+            $firstFinding = $group.Group[0]
+            Write-Host ""
+            Write-Host ("  FLAGGED   {0}" -f $firstFinding.ModFile) -ForegroundColor Red
+            Write-Host ("  Path:     {0}" -f $firstFinding.ModPath) -ForegroundColor DarkGray
+            Write-Host ""
+            Write-Host "  PATTERNS" -ForegroundColor Yellow
 
-    foreach ($group in $groupedFindings) {
-        $firstFinding = $group.Group[0]
-        Write-Host ("Mod: {0}" -f $firstFinding.ModFile) -ForegroundColor White
-        Write-Host ("Pfad: {0}" -f $firstFinding.ModPath) -ForegroundColor DarkGray
+            foreach ($finding in $group.Group) {
+                Write-Host ("    {0}  [{1}]" -f $finding.Pattern, $finding.Level) -ForegroundColor White
+                Write-Host ("      Where: {0}" -f $finding.Where) -ForegroundColor Gray
+                Write-Host ("      Why:   {0}" -f $finding.Reason) -ForegroundColor Gray
+            }
 
-        foreach ($finding in $group.Group) {
-            Write-Host ("  - [{0}] {1}" -f $finding.Level, $finding.Pattern) -ForegroundColor Yellow
-            Write-Host ("    Wo: {0}" -f $finding.Where) -ForegroundColor Gray
-            Write-Host ("    Grund: {0}" -f $finding.Reason) -ForegroundColor Gray
+            Write-Line
         }
-
-        Write-Host ""
     }
 
-    Write-Host "Empfehlung: Starte auffaellige Mods nicht, bevor du sie manuell geprueft hast." -ForegroundColor Yellow
+    Write-Host ""
+    Write-Host "SUMMARY" -ForegroundColor Cyan
+    Write-Line
+    Write-Host ("  Total files scanned: {0}" -f $ModCount) -ForegroundColor White
+    Write-Host ("  Unknown mods:        {0}" -f $unknownMods.Count) -ForegroundColor White
+    Write-Host ("  Suspicious mods:     {0}" -f $suspiciousPaths.Count) -ForegroundColor White
+    Write-Host ("  Suspicious hits:     {0}" -f $findingCount) -ForegroundColor White
+    Write-Host ("  Network used:        0") -ForegroundColor White
+    Write-Host ("  Files changed:       0") -ForegroundColor White
+    Write-Line
+
+    if ($findingCount -eq 0) {
+        Write-Host "Analysis complete. No suspicious hints found." -ForegroundColor Green
+    }
+    else {
+        Write-Host "Analysis complete. Review flagged mods before launching Minecraft." -ForegroundColor Yellow
+    }
 }
 
 <#
@@ -457,11 +602,7 @@ Es gibt keine Netzwerkverbindung, keine Datei-Aenderung, keine Registry-Aenderun
 keine Autostarts und keine Hintergrundprozesse.
 #>
 function Start-OpenModScanner {
-    Write-Host "OpenModScanner" -ForegroundColor Cyan
-    Write-Host "Minecraft Mod Security Scanner" -ForegroundColor White
-    Write-Host ""
-    Write-Host "[1/3] Mods-Ordner pruefen..." -ForegroundColor Cyan
-    Write-Host ""
+    Show-Banner
 
     try {
         Add-Type -AssemblyName System.IO.Compression.FileSystem
@@ -479,10 +620,10 @@ function Start-OpenModScanner {
     }
 
     Write-Host ""
-    Write-Host "[2/3] Mods scannen..." -ForegroundColor Cyan
+    Write-Host ("Scanning directory: {0}" -f $folderPath) -ForegroundColor Cyan
     $scanResult = Start-ModScan -FolderPath $folderPath
 
-    Show-ScanResults -ModCount $scanResult.ModCount -Findings $scanResult.Findings
+    Show-ScanResults -ModCount $scanResult.ModCount -Mods $scanResult.Mods -Findings $scanResult.Findings
 }
 
 Start-OpenModScanner

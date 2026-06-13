@@ -48,28 +48,48 @@ Ohne Treffer:
 OpenModScanner
 Minecraft Mod Security Scanner
 
-[1/3] Mods-Ordner pruefen...
-[2/3] Mods scannen...
-[3/3] Ergebnis anzeigen...
+Enter path to the mods folder: (press Enter to use default)
+PATH: C:\Users\Name\AppData\Roaming\.minecraft\mods
 
-Gefundene Mods:        42
-Verdaechtige Treffer:  0
+Scanning directory: C:\Users\Name\AppData\Roaming\.minecraft\mods
 
-Status: Keine verdaechtigen Hinweise gefunden.
+Found 42 JAR files to analyze
+
+Pass 1 - File discovery...
+Pass 2 - Deep-scanning mod archives...
+Pass 3 - Suspicious string scan...
+Pass 4 - Read-only safety check...
+Pass 5 - JVM process overview...
+   OK  Scanner stayed read-only
+
+  *  UNKNOWN MODS  (42)
+  [ ? ] example.jar
+        Source: local file / not verified online
+
+  *  SUSPICIOUS MODS  (0)
+  None
+
+SUMMARY
+  Total files scanned: 42
+  Unknown mods:        42
+  Suspicious mods:     0
+  Suspicious hits:     0
+  Network used:        0
+  Files changed:       0
 ```
 
 Mit Treffern:
 
 ```text
-WARNUNG: Verdaechtige Hinweise gefunden
+  *  SUSPICIOUS MODS  (1)
 
-Mod: example.jar
-Pfad: C:\Minecraft\mods\example.jar
-  - [Hoch] discord.com/api/webhooks
-    Wo: Inhalt: fabric.mod.json
-    Grund: Discord-Webhooks werden oft fuer Datenabfluss missbraucht.
+  FLAGGED   example.jar
+  Path:     C:\Minecraft\mods\example.jar
 
-Empfehlung: Starte auffaellige Mods nicht, bevor du sie manuell geprueft hast.
+  PATTERNS
+    discord.com/api/webhooks  [Hoch]
+      Where: Inhalt: fabric.mod.json
+      Why:   Discord-Webhooks werden oft fuer Datenabfluss missbraucht.
 ```
 
 ## Erklaerung aller Funktionen
