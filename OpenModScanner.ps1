@@ -192,9 +192,17 @@ Die Funktion ist nur Ausgabe. Sie nimmt keine Aenderungen an Dateien vor.
 function Show-ScanResults {
     param (
         # Die Trefferliste, die von Find-SuspiciousModFiles erzeugt wurde.
-        [Parameter(Mandatory = $true)]
-        [object[]]$Matches
+        # Eine leere Liste ist erlaubt, weil ein sauberer Scan ohne Treffer
+        # ein normales Ergebnis ist und keinen Fehler ausloesen soll.
+        [AllowEmptyCollection()]
+        [object[]]$Matches = @()
     )
+
+    # Falls PowerShell aus irgendeinem Grund $null uebergibt, behandeln wir
+    # das genauso wie eine leere Trefferliste.
+    if ($null -eq $Matches) {
+        $Matches = @()
+    }
 
     if ($Matches.Count -eq 0) {
         Write-Host ""
