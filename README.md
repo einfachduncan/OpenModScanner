@@ -1,15 +1,17 @@
 # OpenModScanner
 
-OpenModScanner ist ein vollständig quelloffener Minecraft-Mod-Scanner als einzelnes PowerShell-Skript.
+OpenModScanner ist ein vollstaendig quelloffener Minecraft-Mod-Scanner als einzelnes PowerShell-Skript.
 
-Das Skript sucht in einem vom Benutzer angegebenen Ordner nach verdächtigen Begriffen in Mod-Dateinamen. Es prüft nur Dateinamen und Pfade. Es verändert keine Dateien, löscht nichts, sendet keine Daten ins Internet und benötigt keine Administratorrechte.
+Das Skript scannt einen vom Benutzer angegebenen Mods-Ordner. Es sucht nicht nur nach auffaelligen Mod-Dateinamen, sondern oeffnet `.jar`- und `.zip`-Mods read-only als Archiv und prueft auch interne Dateipfade sowie kleine Text-, Metadaten- und `.class`-Dateien auf auffaellige Klartext-Muster.
+
+OpenModScanner veraendert keine Dateien, loescht nichts, entpackt nichts dauerhaft, sendet keine Daten ins Internet und benoetigt keine Administratorrechte.
 
 ## Inhalt des Repositorys
 
 - `OpenModScanner.ps1`: Das einzige PowerShell-Skript des Projekts.
-- `README.md`: Diese Erklärung, Sicherheitsanalyse und Prüfanleitung.
+- `README.md`: Diese Erklaerung, Sicherheitsanalyse und Pruefanleitung.
 
-## Ausführung
+## Ausfuehrung
 
 Lokal:
 
@@ -17,86 +19,113 @@ Lokal:
 powershell -ExecutionPolicy Bypass -File .\OpenModScanner.ps1
 ```
 
-Später über GitHub Raw-URL:
+Direkt ueber GitHub Raw-URL:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -Command "Invoke-Expression (Invoke-RestMethod 'RAW_GITHUB_URL_HIER')"
+powershell -ExecutionPolicy Bypass -Command "Invoke-Expression (Invoke-RestMethod 'https://raw.githubusercontent.com/einfachduncan/OpenModScanner/main/OpenModScanner.ps1')"
 ```
 
-Ersetze `RAW_GITHUB_URL_HIER` durch die Raw-URL zu `OpenModScanner.ps1` im GitHub-Repository.
+Hinweis: Der obige Startbefehl laedt das Skript von GitHub. Das Skript selbst enthaelt keine Netzwerkfunktionen.
 
-Hinweis: Der obige Befehl lädt das Skript über PowerShell aus GitHub. Das Skript selbst enthält keine Netzwerkfunktionen. Wer maximale Sicherheit möchte, sollte den Code zuerst öffnen, vollständig lesen und dann lokal ausführen.
+## Was der Scanner prueft
 
-## Was der Scanner macht
+1. Der Benutzer gibt einen Mods-Ordner ein.
+2. Das Skript prueft, ob dieser Ordner existiert.
+3. Das Skript sucht rekursiv nach `.jar`- und `.zip`-Dateien.
+4. Jede gefundene Mod wird read-only als Archiv geoeffnet.
+5. Der Mod-Dateiname wird auf auffaellige Muster geprueft.
+6. Interne Archiv-Pfade werden auf auffaellige Muster geprueft.
+7. Kleine Text-, Metadaten- und `.class`-Dateien im Archiv werden im Arbeitsspeicher gelesen und auf Klartext-Muster geprueft.
+8. Treffer werden mit Risiko, Mod-Datei, Pfad, Fundstelle, Muster und Grund angezeigt.
 
-1. Der Benutzer gibt einen Ordnerpfad ein.
-2. Das Skript prüft, ob dieser Pfad ein vorhandener Ordner ist.
-3. Das Skript durchsucht diesen Ordner und seine Unterordner nach Dateien.
-4. Das Skript prüft nur die Dateinamen auf sichtbare verdächtige Begriffe.
-5. Treffer werden mit Dateiname, vollständigem Pfad und gefundenem Muster angezeigt.
+Ein Treffer ist kein Beweis fuer Schadsoftware. Ein Treffer bedeutet: Diese Mod sollte genauer geprueft werden.
 
-Ein Treffer bedeutet nicht automatisch, dass eine Mod schädlich ist. Ein Treffer bedeutet nur: Dieser Dateiname sollte genauer geprüft werden.
-
-## Erklärungen aller Funktionen
+## Erklaerung aller Funktionen
 
 ### `Write-Info`
 
-Gibt normale Statusmeldungen im PowerShell-Fenster aus. Die Funktion nimmt einen Text entgegen und zeigt ihn in Cyan an. Sie speichert nichts, sendet nichts und verändert keine Dateien.
+Zeigt normale Statusmeldungen im PowerShell-Fenster an. Die Funktion veraendert nichts.
 
 ### `Write-WarningMessage`
 
-Gibt Warnmeldungen im PowerShell-Fenster aus. Sie wird benutzt, wenn zum Beispiel kein gültiger Ordner angegeben wurde. Auch diese Funktion zeigt nur Text an.
+Zeigt Warnmeldungen an, zum Beispiel wenn ein Ordner nicht gefunden wurde oder ein Archiv nicht gelesen werden kann.
 
 ### `Get-ScanFolderFromUser`
 
-Fragt den Benutzer nach dem Ordner, der gescannt werden soll. Die Eingabe wird leicht bereinigt, indem äußere Leerzeichen und äußere Anführungszeichen entfernt werden. Dadurch funktionieren kopierte Pfade besser. Die Funktion erstellt keinen Ordner und greift nicht schreibend auf Dateien zu.
+Fragt den Benutzer nach dem Mods-Ordner. Die Eingabe wird nur leicht bereinigt, damit kopierte Pfade besser funktionieren.
 
 ### `Test-ScanFolder`
 
-Prüft, ob der angegebene Pfad existiert und ein Ordner ist. Dafür wird `Test-Path` mit `-PathType Container` verwendet. Diese Prüfung liest nur Dateisystem-Informationen.
+Prueft, ob der angegebene Pfad ein vorhandener Ordner ist. Es werden nur Dateisystem-Informationen gelesen.
 
-### `Get-SuspiciousNamePatterns`
+### `Get-SuspiciousPatterns`
 
-Liefert die sichtbare Liste verdächtiger Begriffe. Beispiele sind `token`, `grabber`, `stealer`, `keylogger`, `webhook`, `payload` und `miner`. Die Liste steht im Klartext im Skript, damit jeder sie prüfen und nachvollziehen kann.
+Liefert die komplette sichtbare Suchliste. Jedes Muster enthaelt einen Suchtext, eine grobe Risiko-Einschaetzung und eine Erklaerung.
 
-### `Find-SuspiciousModFiles`
+### `New-Finding`
 
-Durchsucht den angegebenen Ordner rekursiv nach Dateien. Dafür wird `Get-ChildItem` mit `-File` und `-Recurse` verwendet. Die Funktion liest nur Dateinamen und Pfade. Für jede Datei wird geprüft, ob der Dateiname eines der verdächtigen Muster enthält. Bei einem Treffer wird ein einfaches Ergebnisobjekt mit Dateiname, Pfad und Muster erzeugt.
+Erstellt ein einheitliches Ergebnisobjekt fuer Treffer. Dadurch sehen alle Treffer gleich aus.
+
+### `Find-PatternsInText`
+
+Prueft einen Text gegen alle Suchmuster. Die Suche ist einfache Klartext-Suche und nicht von Gross-/Kleinschreibung abhaengig.
+
+### `Get-ModFiles`
+
+Sucht im angegebenen Ordner rekursiv nach `.jar`- und `.zip`-Dateien. Die Funktion listet nur Dateien auf.
+
+### `Test-EntryShouldBeRead`
+
+Entscheidet, ob eine Datei innerhalb einer Mod gelesen werden soll. Gelesen werden nur kleine Dateien bis 1 MB und typische Text-, Metadaten- oder `.class`-Dateien.
+
+### `Read-ArchiveEntryAsText`
+
+Liest eine kleine Datei aus einer Mod in den Arbeitsspeicher. Die Datei wird nicht auf die Festplatte entpackt und nicht veraendert.
+
+### `Scan-ModArchive`
+
+Oeffnet eine Mod read-only als ZIP/JAR-Archiv. Geprueft werden Mod-Dateiname, interne Archiv-Pfade und kleine lesbare Inhalte.
+
+### `Start-ModScan`
+
+Findet alle Mod-Dateien und scannt sie einzeln. Die Funktion sammelt alle Treffer in einer Liste.
 
 ### `Show-ScanResults`
 
-Zeigt die Treffer an. Wenn keine Treffer gefunden wurden, gibt die Funktion eine grüne Entwarnung aus. Wenn Treffer gefunden wurden, zeigt sie pro Treffer Dateiname, Pfad und Muster an. Sie löscht und verändert nichts.
+Zeigt die Ergebnisse an. Ohne Treffer wird eine gruene Entwarnung angezeigt. Mit Treffern werden Risiko, Mod, Pfad, Fundstelle, Muster und Grund angezeigt.
 
 ### `Start-OpenModScanner`
 
-Ist der Hauptablauf des Skripts. Diese Funktion zeigt den Starttext, fragt den Ordner ab, prüft den Ordner, lädt die Suchmuster, startet die Suche und zeigt die Ergebnisse an.
+Ist der Hauptablauf des Skripts. Diese Funktion startet die Anzeige, laedt die ZIP-Unterstuetzung, fragt den Ordner ab, startet den Scan und zeigt die Ergebnisse.
 
 ## Sicherheitsanalyse
 
-OpenModScanner ist absichtlich klein und direkt prüfbar.
+OpenModScanner ist absichtlich transparent und lokal.
 
-- Keine Löschbefehle: Das Skript verwendet kein `Remove-Item`.
-- Keine Dateiänderungen: Das Skript verwendet kein `Set-Content`, `Add-Content`, `Out-File`, `Move-Item`, `Copy-Item` oder ähnliche Schreibaktionen.
-- Keine Netzwerkfunktionen im Skript: Das Skript verwendet kein `Invoke-WebRequest`, kein `Invoke-RestMethod`, keine Sockets und keine WebClient-Klassen.
-- Keine Registry-Änderungen: Das Skript verwendet keine Registry-Pfade und keine Registry-Cmdlets.
-- Keine Autostarts: Das Skript legt keine geplanten Aufgaben, Dienste, Startup-Verknüpfungen oder Run-Keys an.
-- Keine Hintergrundprozesse: Das Skript verwendet kein `Start-Process` und erstellt keine Jobs.
-- Keine Adminrechte nötig: Das Skript arbeitet nur mit normalen Lesezugriffen auf den vom Benutzer angegebenen Ordner.
-- Keine Verschleierung: Alle Suchmuster und Funktionen stehen im Klartext.
+- Keine Loeschbefehle im Skript.
+- Keine Schreibbefehle im Skript.
+- Keine Netzwerkfunktionen im Skript.
+- Keine Registry-Aenderungen.
+- Keine Autostarts.
+- Keine Hintergrundprozesse.
+- Keine dauerhafte Entpackung von Mods.
+- Keine Adminrechte noetig.
+- Keine Verschleierung.
+- Alle Suchmuster stehen im Klartext.
 
-## So kann man den gesamten Code prüfen
+Das Skript verwendet `System.IO.Compression.ZipFile` nur, um `.jar`- und `.zip`-Dateien read-only zu oeffnen. Minecraft-Mods sind meistens `.jar`-Dateien, und `.jar` ist technisch ein ZIP-Archiv.
 
-1. Öffne `OpenModScanner.ps1` in einem Texteditor.
+## So kann man den gesamten Code pruefen
+
+1. Oeffne `OpenModScanner.ps1` in einem Texteditor.
 2. Lies die Datei von oben nach unten.
-3. Suche nach gefährlichen oder unerwarteten Befehlen:
+3. Suche nach unerwuenschten Befehlen:
 
 ```powershell
-Select-String -Path .\OpenModScanner.ps1 -Pattern "Invoke-WebRequest|Invoke-RestMethod|Remove-Item|Set-Content|Add-Content|Out-File|Start-Process|Start-Job|Register-ScheduledTask|New-Service|Set-ItemProperty|New-ItemProperty"
+Select-String -Path .\OpenModScanner.ps1 -Pattern "Remove-Item|Set-Content|Add-Content|Out-File|Start-Process|Start-Job|Register-ScheduledTask|New-Service|Set-ItemProperty|New-ItemProperty"
 ```
 
-Bei diesem Projekt sollten keine solchen Befehle im Skript gefunden werden.
-
-4. Prüfe, welche Dateien im Repository liegen:
+4. Pruefe, welche Dateien im Repository liegen:
 
 ```powershell
 Get-ChildItem -File
@@ -104,20 +133,20 @@ Get-ChildItem -File
 
 Es sollten nur `OpenModScanner.ps1` und `README.md` sichtbar sein.
 
-5. Prüfe, ob das Skript syntaktisch korrekt ist:
+5. Pruefe die Syntax:
 
 ```powershell
-powershell -NoProfile -Command "$null = [System.Management.Automation.Language.Parser]::ParseFile('OpenModScanner.ps1', [ref]$null, [ref]$null); 'Syntax OK'"
+powershell -NoProfile -Command "$errors = $null; $tokens = $null; $null = [System.Management.Automation.Language.Parser]::ParseFile('OpenModScanner.ps1', [ref]$tokens, [ref]$errors); if ($errors.Count -eq 0) { 'Syntax OK' } else { $errors }"
 ```
 
 ## Netzwerkhinweis
 
-Das Skript selbst verwendet keine Netzwerkfunktionen. Es gibt keine Telemetrie, keine versteckten Downloads und keine Datenübertragung.
+Das Skript selbst verwendet keine Netzwerkfunktionen. Es gibt keine Telemetrie, keine versteckten Downloads und keine Datenuebertragung.
 
-Nur die optionale Ausführungsform mit `Invoke-RestMethod 'RAW_GITHUB_URL_HIER'` lädt das Skript von GitHub herunter. Dieser Download ist Teil des Startbefehls, nicht Teil von `OpenModScanner.ps1`.
+Nur die optionale Ausfuehrung mit `Invoke-RestMethod` im Startbefehl laedt das Skript von GitHub. Dieser Download ist Teil des Befehls, nicht Teil des Skripts.
 
 ## Grenzen des Scanners
 
-OpenModScanner prüft nur Dateinamen. Er analysiert keine `.jar`-Inhalte, keinen Bytecode und kein Verhalten einer Mod. Dadurch bleibt das Skript transparent und ungefährlich, erkennt aber nicht jede schädliche Mod.
+OpenModScanner ist ein statischer Read-only-Scanner. Er kann auffaellige Klartext-Muster finden, aber er beweist nicht automatisch, ob eine Mod gut oder schlecht ist.
 
-Für eine gründlichere Prüfung sollte man verdächtige Dateien zusätzlich manuell untersuchen, Hashes vergleichen und nur Mods aus vertrauenswürdigen Quellen verwenden.
+Er fuehrt keine Mod aus, dekompiliert keinen Java-Code vollstaendig und ersetzt keine professionelle Malware-Analyse.
