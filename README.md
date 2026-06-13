@@ -264,6 +264,6 @@ Die optionale Ausfuehrung mit `Invoke-RestMethod` im Startbefehl laedt zusaetzli
 
 OpenModScanner ist ein statischer Read-only-Scanner. Er kann bekannte Hashes verifizieren und auffaellige Klartext-Muster finden, aber er beweist nicht automatisch, ob eine Mod gut oder schlecht ist.
 
-Die Online-Verifikation prueft bekannte Mods ueber Modrinth und Megabase. Bekannte Client-Namen wie Meteor, Wurst, Krypton/Crypton, LiquidBounce oder RusherHack werden lokal ueber Signaturen in Dateinamen, Archiv-Pfaden und kleinen Textinhalten erkannt.
+Die Online-Verifikation prueft bekannte Mods ueber Modrinth und Megabase. Bekannte Client-Namen wie Meteor, Wurst, Krypton/Crypton, CevAPI, LiquidBounce oder RusherHack werden lokal ueber Signaturen in Dateinamen, Archiv-Pfaden und kleinen Textinhalten erkannt.
 
 Er fuehrt keine Mod aus, dekompiliert keinen Java-Code vollstaendig und ersetzt keine professionelle Malware-Analyse.
