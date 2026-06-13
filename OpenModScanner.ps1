@@ -1,4 +1,4 @@
-﻿<#
+<#
 OpenModScanner.ps1
 
 Ein quelloffener Minecraft-Mod-Scanner fuer Windows PowerShell.
