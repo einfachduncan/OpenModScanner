@@ -65,20 +65,47 @@ Diese Funktion zeigt den Startbildschirm des Scanners.
 Der Banner ist rein optisch und fuehrt keine Systemaktionen aus.
 #>
 function Show-Banner {
-    Write-Host ""
-    Write-Host " __        __                    _ __  __           _ " -ForegroundColor Cyan
-    Write-Host " \ \      / /_ ___  _____  __ __| |  \/  | ___   __| |" -ForegroundColor Cyan
-    Write-Host "  \ \ /\ / / _` \ \/ / _ \/ _` | | |\/| |/ _ \ / _` |" -ForegroundColor Cyan
-    Write-Host "   \ V  V / (_| |>  <  __/ (_| | | |  | | (_) | (_| |" -ForegroundColor Cyan
-    Write-Host "    \_/\_/ \__,_/_/\_\___|\__,_|_|_|  |_|\___/ \__,_|" -ForegroundColor Cyan
-    Write-Host ""
-    Write-Host "                 WaxedMod Analyzer - Minecraft Mod Security Scanner" -ForegroundColor White
-    Write-Host "                              Made by Waxed" -ForegroundColor DarkGray
-    Write-Host ""
-    Write-Line
-    Write-Host ""
-}
+    $block = [char]::ConvertFromUtf32(0x2588)
+    $dr = [char]::ConvertFromUtf32(0x2557)
+    $v = [char]::ConvertFromUtf32(0x2551)
+    $dl = [char]::ConvertFromUtf32(0x2554)
+    $ul = [char]::ConvertFromUtf32(0x255A)
+    $ur = [char]::ConvertFromUtf32(0x255D)
+    $h = [char]::ConvertFromUtf32(0x2550)
 
+    function Convert-BannerLine {
+        param ([AllowEmptyString()][string]$Line)
+
+        return $Line.Replace('B', $block).Replace('7', $dr).Replace('|', $v).Replace('/', $dl).Replace('<', $ul).Replace('>', $ur).Replace('=', $h)
+    }
+
+    $bannerLines = @(
+        'BB7    BB7 BBBBB7 BB7  BB7BBBBBBB7BBBBBB7 ',
+        'BB|    BB|BB/==BB7<BB7BB/>BB/====>BB/==BB7',
+        'BB| B7 BB|BBBBBBB| <BBB/> BBBBB7  BB|  BB|',
+        'BB|BBB7BB|BB/==BB| BB/BB7 BB/==>  BB|  BB|',
+        '<BBB/BBB/>BB|  BB|BB/> BB7BBBBBBB7BBBBBB/>',
+        ' <==><==> <=>  <=><=>  <=><======><=====> ',
+        '',
+        'BBB7   BBB7 BBBBBB7 BBBBBB7      BBBBB7 BBB7   BB7 BBBBB7 BB7  BB7   BB7BBBBBBBB7BBBBBBB7BBBBBB7 ',
+        'BBBB7 BBBB|BB/===BB7BB/==BB7    BB/==BB7BBBB7  BB|BB/==BB7BB|  <BB7 BB/><==BB/==>BB/====>BB/==BB7',
+        'BB/BBBB/BB|BB|   BB|BB|  BB|    BBBBBBB|BB/BB7 BB|BBBBBBB|BB|   <BBBB/>    BB|   BBBBB7  BBBBBB/>',
+        'BB|<BB/>BB|BB|   BB|BB|  BB|    BB/==BB|BB|<BB7BB|BB/==BB|BB|    <BB/>     BB|   BB/==>  BB/==BB7',
+        'BB| <=> BB|<BBBBBB/>BBBBBB/>    BB|  BB|BB| <BBBB|BB|  BB|BBBBBBB7BB|      BB|   BBBBBBB7BB|  BB|',
+        '<=>     <=> <=====> <=====>     <=>  <=><=>  <===><=>  <=><======><=>      <=>   <======><=>  <=>'
+    )
+
+    Write-Host ''
+    foreach ($line in $bannerLines) {
+        Write-Host (Convert-BannerLine -Line $line) -ForegroundColor Cyan
+    }
+    Write-Host ''
+    Write-Host '                 WaxedMod Analyzer - Minecraft Mod Security Scanner' -ForegroundColor White
+    Write-Host '                              Made by Waxed' -ForegroundColor DarkGray
+    Write-Host ''
+    Write-Line
+    Write-Host ''
+}
 <#
 Funktion: Get-DefaultModsFolder
 
@@ -1457,4 +1484,5 @@ function Start-OpenModScanner {
 }
 
 Start-OpenModScanner
+
 
