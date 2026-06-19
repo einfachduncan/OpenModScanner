@@ -65,6 +65,15 @@ Diese Funktion zeigt den Startbildschirm des Scanners.
 Der Banner ist rein optisch und fuehrt keine Systemaktionen aus.
 #>
 function Show-Banner {
+    try {
+        if ([Console]::BufferWidth -lt 120) {
+            [Console]::BufferWidth = 120
+        }
+    }
+    catch {
+        # Manche Hosts erlauben keine Breiten-Aenderung. Der Banner wird trotzdem ausgegeben.
+    }
+
     $block = [char]::ConvertFromUtf32(0x2588)
     $dr = [char]::ConvertFromUtf32(0x2557)
     $v = [char]::ConvertFromUtf32(0x2551)
