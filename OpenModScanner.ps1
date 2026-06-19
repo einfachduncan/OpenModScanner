@@ -6,8 +6,8 @@ Ein quelloffener Minecraft-Mod-Scanner fuer Windows PowerShell.
 Wichtig:
 - Das Skript liest nur Dateien aus dem Ordner, den der Benutzer angibt.
 - Das Skript veraendert, verschiebt und loescht keine Dateien.
-- Das Skript sendet nur dann Hashes an Modrinth/Megabase, wenn der Benutzer
-  die Online-Verifikation ausdruecklich mit y aktiviert.
+- Das Skript fragt nach Online-Verifikation. Standard ist Ja; mit n bleibt der
+  Scan offline.
 - Das Skript nutzt keine versteckten Downloads.
 - Das Skript braucht keine Administratorrechte.
 - Das Skript nutzt nur PowerShell- und .NET-Bordmittel.
@@ -66,19 +66,11 @@ Der Banner ist rein optisch und fuehrt keine Systemaktionen aus.
 #>
 function Show-Banner {
     Write-Host ""
-    Write-Host "██╗    ██╗ █████╗ ██╗  ██╗███████╗██████╗ " -ForegroundColor Cyan
-    Write-Host "██║    ██║██╔══██╗╚██╗██╔╝██╔════╝██╔══██╗" -ForegroundColor Cyan
-    Write-Host "██║ █╗ ██║███████║ ╚███╔╝ █████╗  ██║  ██║" -ForegroundColor Cyan
-    Write-Host "██║███╗██║██╔══██║ ██╔██╗ ██╔══╝  ██║  ██║" -ForegroundColor Cyan
-    Write-Host "╚███╔███╔╝██║  ██║██╔╝ ██╗███████╗██████╔╝" -ForegroundColor Cyan
-    Write-Host " ╚══╝╚══╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝╚═════╝ " -ForegroundColor Cyan
-    Write-Host ""
-    Write-Host "███╗   ███╗ ██████╗ ██████╗      █████╗ ███╗   ██╗ █████╗ ██╗  ██╗   ██╗████████╗███████╗██████╗ " -ForegroundColor Cyan
-    Write-Host "████╗ ████║██╔═══██╗██╔══██╗    ██╔══██╗████╗  ██║██╔══██╗██║  ╚██╗ ██╔╝╚══██╔══╝██╔════╝██╔══██╗" -ForegroundColor Cyan
-    Write-Host "██╔████╔██║██║   ██║██║  ██║    ███████║██╔██╗ ██║███████║██║   ╚████╔╝    ██║   █████╗  ██████╔╝" -ForegroundColor Cyan
-    Write-Host "██║╚██╔╝██║██║   ██║██║  ██║    ██╔══██║██║╚██╗██║██╔══██║██║    ╚██╔╝     ██║   ██╔══╝  ██╔══██╗" -ForegroundColor Cyan
-    Write-Host "██║ ╚═╝ ██║╚██████╔╝██████╔╝    ██║  ██║██║ ╚████║██║  ██║███████╗██║      ██║   ███████╗██║  ██║" -ForegroundColor Cyan
-    Write-Host "╚═╝     ╚═╝ ╚═════╝ ╚═════╝     ╚═╝  ╚═╝╚═╝  ╚═══╝╚═╝  ╚═╝╚══════╝╚═╝      ╚═╝   ╚══════╝╚═╝  ╚═╝" -ForegroundColor Cyan
+    Write-Host " __        __                    _ __  __           _ " -ForegroundColor Cyan
+    Write-Host " \ \      / /_ ___  _____  __ __| |  \/  | ___   __| |" -ForegroundColor Cyan
+    Write-Host "  \ \ /\ / / _` \ \/ / _ \/ _` | | |\/| |/ _ \ / _` |" -ForegroundColor Cyan
+    Write-Host "   \ V  V / (_| |>  <  __/ (_| | | |  | | (_) | (_| |" -ForegroundColor Cyan
+    Write-Host "    \_/\_/ \__,_/_/\_\___|\__,_|_|_|  |_|\___/ \__,_|" -ForegroundColor Cyan
     Write-Host ""
     Write-Host "                 WaxedMod Analyzer - Minecraft Mod Security Scanner" -ForegroundColor White
     Write-Host "                              Made by Waxed" -ForegroundColor DarkGray
@@ -145,17 +137,80 @@ function Test-ScanFolder {
 Funktion: Get-OnlineVerificationChoice
 
 Diese Funktion fragt den Benutzer, ob bekannte Mods online verifiziert werden
-sollen. Standard ist Nein, damit ohne ausdrueckliche Zustimmung keine Daten ins
-Internet gesendet werden. Wenn der Benutzer y eingibt, werden spaeter nur
-SHA1-Dateihashes an Modrinth und Megabase gesendet.
+sollen. Standard ist Ja, weil dadurch bekannte Mods und umbenannte Mods besser
+erkannt werden. Wenn der Benutzer n eingibt, bleibt der Scan offline.
 #>
 function Get-OnlineVerificationChoice {
     Write-Host ""
-    Write-Host "Online verification with Modrinth/Megabase? [y/N]" -ForegroundColor White
-    Write-Host "Default: N - offline mode, no hashes are sent" -ForegroundColor DarkGray
+    Write-Host "Online verification with Modrinth/Megabase? [Y/n]" -ForegroundColor White
+    Write-Host "Default: Y - press Enter to verify hashes online" -ForegroundColor DarkGray
     $choice = Read-Host "VERIFY"
+    $normalizedChoice = $choice.Trim().ToLowerInvariant()
 
-    return ($choice.Trim().ToLowerInvariant() -eq "y")
+    if ($normalizedChoice -eq "n") {
+        return $false
+    }
+
+    return $true
+}
+
+<#
+Funktion: ConvertTo-NameToken
+
+Diese Funktion normalisiert einen Dateinamen oder Projektnamen fuer den
+Vergleich. Es bleiben nur Kleinbuchstaben und Zahlen uebrig. Dadurch kann man
+z. B. "sodium-fabric-1.21.jar" grob mit dem Projektnamen "Sodium" vergleichen.
+#>
+function ConvertTo-NameToken {
+    param (
+        [AllowNull()]
+        [string]$Text
+    )
+
+    if ([string]::IsNullOrWhiteSpace($Text)) {
+        return ""
+    }
+
+    return ([regex]::Replace($Text.ToLowerInvariant(), "[^a-z0-9]", ""))
+}
+
+<#
+Funktion: Test-ModLooksRenamed
+
+Diese Funktion prueft, ob der sichtbare Dateiname zu dem online gefundenen
+Projekt passt. Wenn weder der Projekt-Slug noch der Projektname im Dateinamen
+auftaucht, wird die Mod als moeglich umbenannt markiert.
+#>
+function Test-ModLooksRenamed {
+    param (
+        [Parameter(Mandatory = $true)]
+        [string]$FileName,
+
+        [AllowNull()]
+        [string]$ProjectName,
+
+        [AllowNull()]
+        [string]$ProjectSlug
+    )
+
+    $fileBase = [System.IO.Path]::GetFileNameWithoutExtension($FileName)
+    $fileToken = ConvertTo-NameToken -Text $fileBase
+    $nameToken = ConvertTo-NameToken -Text $ProjectName
+    $slugToken = ConvertTo-NameToken -Text $ProjectSlug
+
+    if ([string]::IsNullOrWhiteSpace($fileToken)) {
+        return $false
+    }
+
+    if (-not [string]::IsNullOrWhiteSpace($slugToken) -and $fileToken.Contains($slugToken)) {
+        return $false
+    }
+
+    if (-not [string]::IsNullOrWhiteSpace($nameToken) -and $fileToken.Contains($nameToken)) {
+        return $false
+    }
+
+    return $true
 }
 
 <#
@@ -262,6 +317,8 @@ function Get-ModVerification {
         return $null
     }
 
+    $looksRenamed = Test-ModLooksRenamed -FileName $ModFile.Name -ProjectName $verified.Name -ProjectSlug $verified.Slug
+
     return [PSCustomObject]@{
         ModFile = $ModFile.Name
         ModPath = $ModFile.FullName
@@ -269,6 +326,7 @@ function Get-ModVerification {
         Source = $verified.Source
         Name = $verified.Name
         Slug = $verified.Slug
+        IsRenamed = $looksRenamed
     }
 }
 
@@ -1116,6 +1174,8 @@ function Show-ScanResults {
 
     $findingCount = $Findings.Count
     $verifiedPaths = @($VerifiedMods | Select-Object -ExpandProperty ModPath -Unique)
+    $renamedVerifiedMods = @($VerifiedMods | Where-Object { $_.IsRenamed -eq $true } | Sort-Object ModFile)
+    $renamedPaths = @($renamedVerifiedMods | Select-Object -ExpandProperty ModPath -Unique)
     $suspiciousPaths = @($Findings | Select-Object -ExpandProperty ModPath -Unique)
     $bypassPaths = @($BypassFindings | Select-Object -ExpandProperty ModPath -Unique)
     $obfuscatedPaths = @($ObfuscatedMods | Select-Object -ExpandProperty ModPath -Unique)
@@ -1125,8 +1185,9 @@ function Show-ScanResults {
     $warnMark = "!"
     $reviewMark = "?"
     $flaggedMods = @($Mods | Where-Object { $flaggedPaths -contains $_.FullName } | Sort-Object Name)
-    $verifiedCleanMods = @($Mods | Where-Object { ($verifiedPaths -contains $_.FullName) -and ($flaggedPaths -notcontains $_.FullName) } | Sort-Object Name)
-    $reviewMods = @($Mods | Where-Object { ($reviewPaths -contains $_.FullName) -and ($flaggedPaths -notcontains $_.FullName) -and ($verifiedPaths -notcontains $_.FullName) } | Sort-Object Name)
+    $renamedMods = @($Mods | Where-Object { ($renamedPaths -contains $_.FullName) -and ($flaggedPaths -notcontains $_.FullName) } | Sort-Object Name)
+    $verifiedCleanMods = @($Mods | Where-Object { ($verifiedPaths -contains $_.FullName) -and ($renamedPaths -notcontains $_.FullName) -and ($flaggedPaths -notcontains $_.FullName) } | Sort-Object Name)
+    $reviewMods = @($Mods | Where-Object { ($reviewPaths -contains $_.FullName) -and ($flaggedPaths -notcontains $_.FullName) -and ($verifiedPaths -notcontains $_.FullName) -and ($renamedPaths -notcontains $_.FullName) } | Sort-Object Name)
     $cleanMods = @($Mods | Where-Object { ($flaggedPaths -notcontains $_.FullName) -and ($verifiedPaths -notcontains $_.FullName) -and ($reviewPaths -notcontains $_.FullName) } | Sort-Object Name)
 
     Write-Host ""
@@ -1147,6 +1208,20 @@ function Show-ScanResults {
         else {
             foreach ($mod in $flaggedMods) {
                 Write-Host ("  {0,-4} {1,-10} {2}" -f $warnMark, "FLAGGED", $mod.Name) -ForegroundColor Red
+            }
+        }
+
+        Write-Host ""
+        Write-Host ("  RENAMED  ({0})" -f $renamedMods.Count) -ForegroundColor Yellow
+        if ($renamedMods.Count -eq 0) {
+            Write-Host "    None" -ForegroundColor DarkGray
+        }
+        else {
+            foreach ($mod in $renamedMods) {
+                $verifiedInfo = @($renamedVerifiedMods | Where-Object { $_.ModPath -eq $mod.FullName } | Select-Object -First 1)
+                $expectedName = if ($verifiedInfo.Count -gt 0 -and -not [string]::IsNullOrWhiteSpace($verifiedInfo[0].Name)) { $verifiedInfo[0].Name } else { "verified project" }
+                Write-Host ("  {0,-4} {1,-10} {2}" -f $reviewMark, "RENAMED", $mod.Name) -ForegroundColor Yellow
+                Write-Host ("       Expected: {0}" -f $expectedName) -ForegroundColor DarkGray
             }
         }
 
@@ -1201,6 +1276,9 @@ function Show-ScanResults {
         foreach ($mod in @($VerifiedMods | Sort-Object ModFile)) {
             Write-Host ("  [ OK ] {0}" -f $mod.ModFile) -ForegroundColor Green
             Write-Host ("         {0}: {1}" -f $mod.Source, $mod.Name) -ForegroundColor DarkGray
+            if ($mod.IsRenamed -eq $true) {
+                Write-Host "         Note: file name does not match the verified project name" -ForegroundColor Yellow
+            }
         }
     }
 
@@ -1309,6 +1387,7 @@ function Show-ScanResults {
     Write-Line
     Write-Host ("  Total files scanned: {0}" -f $ModCount) -ForegroundColor White
     Write-Host ("  Verified mods:       {0}" -f $VerifiedMods.Count) -ForegroundColor White
+    Write-Host ("  Renamed mods:        {0}" -f $renamedMods.Count) -ForegroundColor White
     Write-Host ("  Clean mods:          {0}" -f $cleanMods.Count) -ForegroundColor White
     Write-Host ("  Suspicious mods:     {0}" -f $suspiciousPaths.Count) -ForegroundColor White
     Write-Host ("  Bypass/Injected:     {0}" -f $bypassPaths.Count) -ForegroundColor White
@@ -1340,8 +1419,8 @@ Diese Funktion ist der Hauptablauf:
 5. JAR/ZIP-Dateien read-only pruefen.
 6. Ergebnisse anzeigen.
 
-Eine Netzwerkverbindung wird nur benutzt, wenn der Benutzer die Online-
-Verifikation mit y aktiviert. Es gibt keine Datei-Aenderung, keine
+Eine Netzwerkverbindung wird fuer die Online-Verifikation benutzt, wenn der
+Benutzer nicht n eingibt. Es gibt keine Datei-Aenderung, keine
 Registry-Aenderung, keine Autostarts und keine Hintergrundprozesse.
 #>
 function Start-OpenModScanner {

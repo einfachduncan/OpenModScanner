@@ -4,7 +4,7 @@ OpenModScanner ist ein quelloffener Minecraft-Mod-Scanner als einzelnes PowerShe
 
 Das Skript scannt einen vom Benutzer angegebenen Mods-Ordner. Es listet die sichtbaren Haupt-Mod-Dateien aus diesem Ordner in einer Tabelle und oeffnet diese `.jar`- und `.zip`-Mods read-only als Archiv. Geflaggt werden konkrete Cheat-, Hack- und Injection-Hinweise, nicht normale Mods nur weil sie unbekannt sind oder normale Fabric-Technik verwenden.
 
-OpenModScanner veraendert keine Dateien, loescht nichts, entpackt nichts dauerhaft und benoetigt keine Administratorrechte. Online-Verifikation ist optional: Nur wenn der Benutzer `y` eingibt, werden SHA1-Dateihashes an Modrinth und Megabase gesendet.
+OpenModScanner veraendert keine Dateien, loescht nichts, entpackt nichts dauerhaft und benoetigt keine Administratorrechte. Online-Verifikation ist standardmaessig aktiv: Bei Enter werden SHA1-Dateihashes an Modrinth und Megabase gesendet. Mit `n` bleibt der Scan offline.
 
 ## Inhalt des Repositorys
 
@@ -28,10 +28,10 @@ powershell -ExecutionPolicy Bypass -Command "Invoke-Expression (Invoke-RestMetho
 Beim Start fragt das Skript:
 
 ```text
-Online verification with Modrinth/Megabase? [y/N]
+Online verification with Modrinth/Megabase? [Y/n]
 ```
 
-Bei Enter oder `N` bleibt der Scan offline. Bei `y` werden Hashes online geprueft.
+Bei Enter oder `Y` werden Hashes online geprueft. Bei `n` bleibt der Scan offline.
 
 ## Was der Scanner prueft
 
@@ -41,12 +41,13 @@ Bei Enter oder `N` bleibt der Scan offline. Bei `y` werden Hashes online gepruef
 4. Das Skript sucht direkt im Mods-Ordner nach `.jar`- und `.zip`-Dateien.
 5. Jede gefundene Mod bekommt lokal einen SHA1-Hash.
 6. Wenn Online-Verifikation aktiv ist, wird der Hash bei Modrinth und Megabase gesucht.
-7. Jede gefundene Mod wird read-only als Archiv geoeffnet.
-8. Der Mod-Dateiname wird auf Cheat-/Hack-Muster geprueft.
-9. Interne Archiv-Pfade werden auf Cheat-/Hack-Muster geprueft.
-10. Kleine Text-, Metadaten- und `.class`-Dateien im Archiv werden im Arbeitsspeicher gelesen und auf Cheat-/Hack-Muster geprueft.
-11. Alle Haupt-Mods werden in einer Tabelle angezeigt.
-12. Nur geflaggte Mods erscheinen in den Detailbereichen.
+7. Wenn eine online verifizierte Mod einen unpassenden Dateinamen hat, wird sie als `RENAMED` angezeigt.
+8. Jede gefundene Mod wird read-only als Archiv geoeffnet.
+9. Der Mod-Dateiname wird auf Cheat-/Hack-Muster geprueft.
+10. Interne Archiv-Pfade werden auf Cheat-/Hack-Muster geprueft.
+11. Kleine Text-, Metadaten- und `.class`-Dateien im Archiv werden im Arbeitsspeicher gelesen und auf Cheat-/Hack-Muster geprueft.
+12. Alle Haupt-Mods werden in einer Tabelle angezeigt.
+13. Nur geflaggte Mods erscheinen in den Detailbereichen.
 
 Ein Treffer ist kein Beweis fuer Schadsoftware. Ein Treffer bedeutet: Diese Mod sollte genauer geprueft werden.
 
@@ -71,6 +72,10 @@ Pass 5 - Scanning JVM for agents and injections...
   VERIFIED (1)
   ✓    VERIFIED   sodium.jar
 
+  RENAMED  (1)
+  ?    RENAMED    random-name.jar
+       Expected: Sodium
+
   REVIEW   (1)
   ?    REVIEW     packed-mod.jar
 
@@ -87,6 +92,7 @@ Pass 5 - Scanning JVM for agents and injections...
 SUMMARY
   Total files scanned: 42
   Verified mods:       1
+  Renamed mods:        1
   Clean mods:          40
   Suspicious mods:     1
   Bypass/Injected:     0
@@ -128,7 +134,7 @@ Prueft, ob der angegebene Pfad ein vorhandener Ordner ist. Es werden nur Dateisy
 
 ### `Get-OnlineVerificationChoice`
 
-Fragt, ob die Online-Verifikation aktiviert werden soll. Standard ist `N`, also offline.
+Fragt, ob die Online-Verifikation aktiviert werden soll. Standard ist `Y`, also online. Mit `n` bleibt der Scan offline.
 
 ### `Query-Modrinth`
 
@@ -196,11 +202,11 @@ Oeffnet eine Mod read-only als ZIP/JAR-Archiv. Geprueft werden Mod-Dateiname, in
 
 ### `Start-ModScan`
 
-Findet alle Mod-Dateien, startet die Passes und sammelt Verified-, Flagged-, Review- und JVM-Ergebnisse.
+Findet alle Mod-Dateien, startet die Passes und sammelt Verified-, Renamed-, Flagged-, Review- und JVM-Ergebnisse.
 
 ### `Show-ScanResults`
 
-Zeigt zuerst eine Haupt-Mod-Uebersicht, die `! FLAGGED`, `✓ VERIFIED`, `? REVIEW` und `✓ CLEAN` getrennt gruppiert. Danach zeigt es nur relevante Detailbereiche.
+Zeigt zuerst eine Haupt-Mod-Uebersicht, die `! FLAGGED`, `✓ VERIFIED`, `? RENAMED`, `? REVIEW` und `✓ CLEAN` getrennt gruppiert. Danach zeigt es nur relevante Detailbereiche.
 
 ### `Show-ClosingCredits`
 
@@ -223,7 +229,7 @@ OpenModScanner ist transparent und lokal-first.
 - Keine Adminrechte noetig.
 - Keine Verschleierung.
 - Alle Suchmuster stehen im Klartext.
-- Netzwerk nur optional nach Benutzerbestaetigung.
+- Netzwerk fuer Online-Verifikation standardmaessig aktiv, aber mit `n` deaktivierbar.
 
 Wenn Online-Verifikation aktiviert wird, sendet das Skript SHA1-Dateihashes an:
 
@@ -266,9 +272,9 @@ powershell -NoProfile -Command "$errors = $null; $tokens = $null; $null = [Syste
 
 ## Netzwerkhinweis
 
-Standardmaessig verwendet das Skript keine Netzwerkfunktionen. Wenn der Benutzer bei `Online verification with Modrinth/Megabase? [y/N]` nur Enter drueckt, bleibt alles offline.
+Standardmaessig verwendet das Skript die Online-Verifikation. Wenn der Benutzer bei `Online verification with Modrinth/Megabase? [Y/n]` nur Enter drueckt, werden SHA1-Hashes bei Modrinth und Megabase geprueft.
 
-Wenn der Benutzer `y` eingibt, nutzt das Skript `Invoke-RestMethod`, um SHA1-Hashes bei Modrinth und Megabase zu pruefen. Es gibt keine Telemetrie, keine versteckten Downloads und keine Mod-Datei-Uploads.
+Wenn der Benutzer `n` eingibt, bleibt der Scan offline. Es gibt keine Telemetrie, keine versteckten Downloads und keine Mod-Datei-Uploads.
 
 Die optionale Ausfuehrung mit `Invoke-RestMethod` im Startbefehl laedt zusaetzlich das Skript von GitHub.
 
